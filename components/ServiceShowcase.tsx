@@ -16,6 +16,7 @@ type Slide = {
   title: string;
   description: string;
   kind: SlideKind;
+  image: string;
 };
 
 const SLIDES: Slide[] = [
@@ -25,6 +26,7 @@ const SLIDES: Slide[] = [
     description:
       "Realistic, modern website previews built for speed and clarity.",
     kind: "website",
+    image: "/previews/Websites/website.png",
   },
   {
     number: "02",
@@ -32,6 +34,7 @@ const SLIDES: Slide[] = [
     description:
       "Analytics and data visualization interfaces that make numbers easy to read.",
     kind: "dashboard",
+    image: "/previews/Dashboards/dashboard.png",
   },
   {
     number: "03",
@@ -39,6 +42,7 @@ const SLIDES: Slide[] = [
     description:
       "Campaign visuals and social media creative built to convert.",
     kind: "marketing",
+    image: "/previews/Marketing/marketing.png",
   },
   {
     number: "04",
@@ -46,6 +50,7 @@ const SLIDES: Slide[] = [
     description:
       "Architectural renders that bring a concept to life before it's built.",
     kind: "architecture",
+    image: "/previews/Architecture/architecture.png",
   },
   {
     number: "05",
@@ -53,6 +58,7 @@ const SLIDES: Slide[] = [
     description:
       "Branding systems, colour and type that give a business a real identity.",
     kind: "branding",
+    image: "/previews/Portfolio/portfolio.png",
   },
 ];
 
@@ -261,7 +267,7 @@ export default function ServiceShowcase() {
                     bg-white
                   "
                 >
-                  <SlidePreview kind={slide.kind} />
+                  <SlidePreview image={slide.image} title={slide.title} />
                 </div>
               </motion.div>
             );
@@ -461,14 +467,20 @@ export default function ServiceShowcase() {
    PREVIEW WRAPPER
 ================================================================ */
 
-function SlidePreview({ kind }: { kind: SlideKind }) {
+function SlidePreview({
+  image,
+  title,
+}: {
+  image: string;
+  title: string;
+}) {
   return (
     <div className="h-full w-full overflow-hidden bg-white">
-      {kind === "website" && <WebsitePreview />}
-      {kind === "dashboard" && <DashboardPreview />}
-      {kind === "marketing" && <MarketingPreview />}
-      {kind === "architecture" && <ArchitecturePreview />}
-      {kind === "branding" && <BrandingPreview />}
+      <img
+        src={image}
+        alt={title}
+        className="h-full w-full object-cover"
+      />
     </div>
   );
 }

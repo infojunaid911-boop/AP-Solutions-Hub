@@ -39,13 +39,13 @@ export default function Footer() {
             </p>
 
             <div className="mt-6 flex items-center gap-3">
-              <SocialIcon href="https://instagram.com" label="Instagram">
+              <SocialIcon href="https://www.instagram.com/apsolutionshub/" label="Instagram">
                 <Instagram size={16} strokeWidth={1.8} />
               </SocialIcon>
               <SocialIcon href="https://linkedin.com" label="LinkedIn">
                 <Linkedin size={16} strokeWidth={1.8} />
               </SocialIcon>
-              <SocialIcon href="https://facebook.com" label="Facebook">
+              <SocialIcon href="https://www.facebook.com/apsolutionshub.pk" label="Facebook">
                 <Facebook size={16} strokeWidth={1.8} />
               </SocialIcon>
             </div>
