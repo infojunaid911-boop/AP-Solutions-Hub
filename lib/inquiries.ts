@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { InquiryStatus } from "@/lib/supabase/types";
 
 export const CONTACT_SERVICE_OPTIONS = [
@@ -40,4 +41,24 @@ export function emailHref(email: string, name: string) {
 
 export function isInquiryStatus(value: string): value is InquiryStatus {
   return ["new", "contacted", "discussion", "converted", "closed"].includes(value);
+}
+
+/**
+ * Counts inquiries with status "new". Accepts either the server or browser
+ * Supabase client — both are bound to the signed-in admin's session, so RLS
+ * scopes the result correctly. Used for the initial sidebar badge count
+ * (server) and for re-syncing it after a realtime event (browser).
+ */
+export async function countNewInquiries(supabase: SupabaseClient): Promise<number> {
+  const { count, error } = await supabase
+    .from("inquiries")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "new");
+
+  if (error) {
+    console.error("countNewInquiries failed:", error.message);
+    return 0;
+  }
+
+  return count ?? 0;
 }

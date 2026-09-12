@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { countNewInquiries } from "@/lib/inquiries";
 import type { Profile } from "@/lib/supabase/types";
 import AdminShell from "@/components/admin/AdminShell";
 
@@ -34,5 +35,13 @@ export default async function DashboardLayout({
     redirect("/admin/unauthorized");
   }
 
-  return <AdminShell profile={profile}>{children}</AdminShell>;
+  // Seeds the sidebar's "Queries" badge on first paint. AdminShell keeps it
+  // in sync after that via a realtime subscription.
+  const newInquiriesCount = await countNewInquiries(supabase);
+
+  return (
+    <AdminShell profile={profile} initialNewInquiriesCount={newInquiriesCount}>
+      {children}
+    </AdminShell>
+  );
 }

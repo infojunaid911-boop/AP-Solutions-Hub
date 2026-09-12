@@ -2,86 +2,118 @@
 
 import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/admin/auth";
+import { deleteReviewImageByUrl } from "@/lib/supabase/storage";
 
-export type ReviewFormInput = {
-  id?: string;
-  clientName: string;
+// Reviews show up on the public site the moment they're active, so every
+// mutation revalidates both the admin list and the homepage.
+function revalidateReviewSurfaces() {
+  revalidatePath("/admin/reviews");
+  revalidatePath("/");
+}
+
+export type ReviewInput = {
+  client_name: string;
   company: string;
   rating: number;
   review: string;
-  clientImage: string | null;
+  client_image: string | null;
   featured: boolean;
   active: boolean;
 };
 
-function revalidateReviews() {
-  revalidatePath("/");
-  revalidatePath("/admin");
-  revalidatePath("/admin/reviews");
-}
-
-function validate(input: ReviewFormInput) {
-  const clientName = input.clientName.trim();
+function validate(input: ReviewInput) {
+  const client_name = input.client_name.trim();
+  const company = input.company.trim();
   const review = input.review.trim();
-  if (clientName.length < 2 || clientName.length > 120) throw new Error("Client name is required.");
-  if (input.company.trim().length > 160) throw new Error("Company name is too long.");
-  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+  const rating = Math.round(Number(input.rating));
+
+  if (client_name.length < 2 || client_name.length > 120) {
+    throw new Error("Please enter a valid client name.");
+  }
+  if (company.length > 160) {
+    throw new Error("Company name is too long.");
+  }
+  if (review.length < 5 || review.length > 2000) {
+    throw new Error("Review text should be between 5 and 2000 characters.");
+  }
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
     throw new Error("Rating must be between 1 and 5.");
   }
-  if (review.length < 10 || review.length > 2000) {
-    throw new Error("Review text must be between 10 and 2000 characters.");
-  }
+
+  return { client_name, company, review, rating };
 }
 
-export async function upsertReviewAction(input: ReviewFormInput) {
+export async function createReview(input: ReviewInput) {
   const supabase = await assertAdmin();
-  validate(input);
+  const { client_name, company, review, rating } = validate(input);
 
-  const payload = {
-    client_name: input.clientName.trim(),
-    company: input.company.trim() || null,
-    rating: input.rating,
-    review: input.review.trim(),
-    client_image: input.clientImage,
+  const { error } = await supabase.from("reviews").insert({
+    client_name,
+    company,
+    rating,
+    review,
+    client_image: input.client_image,
     featured: input.featured,
     active: input.active,
-  };
+  });
 
-  if (input.id) {
-    const { error } = await supabase.from("reviews").update(payload).eq("id", input.id);
-    if (error) throw error;
-  } else {
-    const { error } = await supabase.from("reviews").insert(payload);
-    if (error) throw error;
-  }
-
-  revalidateReviews();
+  if (error) throw new Error(error.message);
+  revalidateReviewSurfaces();
 }
 
-export async function deleteReviewAction(id: string) {
+export async function updateReview(id: string, input: ReviewInput) {
   const supabase = await assertAdmin();
+  const { client_name, company, review, rating } = validate(input);
+
+  const { error } = await supabase
+    .from("reviews")
+    .update({
+      client_name,
+      company,
+      rating,
+      review,
+      client_image: input.client_image,
+      featured: input.featured,
+      active: input.active,
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+  revalidateReviewSurfaces();
+}
+
+export async function deleteReview(id: string, clientImageUrl: string | null) {
+  const supabase = await assertAdmin();
+
   const { error } = await supabase.from("reviews").delete().eq("id", id);
-  if (error) throw error;
-  revalidateReviews();
-}
+  if (error) throw new Error(error.message);
 
-export async function setReviewFlagAction(
-  id: string,
-  field: "featured" | "active",
-  value: boolean
-) {
-  const supabase = await assertAdmin();
-  const { error } = await supabase.from("reviews").update({ [field]: value }).eq("id", id);
-  if (error) throw error;
-  revalidateReviews();
-}
-
-export async function setReviewRatingAction(id: string, rating: number) {
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw new Error("Rating must be between 1 and 5.");
+  if (clientImageUrl) {
+    // Best-effort — never blocks the delete if storage cleanup fails.
+    await deleteReviewImageByUrl(clientImageUrl);
   }
+
+  revalidateReviewSurfaces();
+}
+
+export async function setReviewFeatured(id: string, featured: boolean) {
   const supabase = await assertAdmin();
-  const { error } = await supabase.from("reviews").update({ rating }).eq("id", id);
-  if (error) throw error;
-  revalidateReviews();
+  const { error } = await supabase.from("reviews").update({ featured }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateReviewSurfaces();
+}
+
+export async function setReviewActive(id: string, active: boolean) {
+  const supabase = await assertAdmin();
+  const { error } = await supabase.from("reviews").update({ active }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateReviewSurfaces();
+}
+
+export async function setReviewRating(id: string, rating: number) {
+  const supabase = await assertAdmin();
+  const clamped = Math.min(5, Math.max(1, Math.round(rating)));
+  const { error } = await supabase.from("reviews").update({ rating: clamped }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateReviewSurfaces();
 }

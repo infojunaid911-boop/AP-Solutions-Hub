@@ -22,15 +22,20 @@ export async function getActiveReviews(): Promise<Review[]> {
   })) as Review[];
 }
 
+// Updated: dropped display_order from the select/order — the packages
+// table only has id, service_category, package_name, description,
+// features, price_label, featured, active, created_at, updated_at.
+// Featured packages now sort first instead, same as reviews.
 export async function getActivePackages(): Promise<Package[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("packages")
     .select(
-      "id, service_category, package_name, description, features, price_label, featured, active, display_order, created_at, updated_at"
+      "id, service_category, package_name, description, features, price_label, featured, active, created_at, updated_at"
     )
     .eq("active", true)
-    .order("display_order", { ascending: true });
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false });
 
   if (error || !data) return [];
   return data.map((row) => ({

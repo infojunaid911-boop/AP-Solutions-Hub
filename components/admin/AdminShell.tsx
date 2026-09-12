@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { countNewInquiries } from "@/lib/inquiries";
 import type { Profile } from "@/lib/supabase/types";
 
 type NavLeaf = { label: string; href: string };
@@ -49,12 +50,15 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function AdminShell({
   profile,
+  initialNewInquiriesCount = 0,
   children,
 }: {
   profile: Profile;
+  initialNewInquiriesCount?: number;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const newInquiriesCount = useNewInquiriesCount(initialNewInquiriesCount);
   const displayName = profile.full_name || profile.email || "Admin";
   const initials =
     displayName
@@ -68,7 +72,12 @@ export default function AdminShell({
     <div className="min-h-screen bg-offwhite">
       {/* Desktop fixed sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] flex-col border-r border-ink/8 bg-white lg:flex">
-        <SidebarContent displayName={displayName} initials={initials} onNavigate={() => {}} />
+        <SidebarContent
+          displayName={displayName}
+          initials={initials}
+          newInquiriesCount={newInquiriesCount}
+          onNavigate={() => {}}
+        />
       </aside>
 
       {/* Mobile top bar */}
@@ -82,9 +91,14 @@ export default function AdminShell({
         <button
           aria-label="Open menu"
           onClick={() => setDrawerOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/12 text-ink"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-ink/12 text-ink"
         >
           <Menu size={19} strokeWidth={1.8} />
+          {newInquiriesCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red text-[9px] font-semibold text-white">
+              {newInquiriesCount > 9 ? "9+" : newInquiriesCount}
+            </span>
+          )}
         </button>
       </header>
 
@@ -125,6 +139,7 @@ export default function AdminShell({
               <SidebarContent
                 displayName={displayName}
                 initials={initials}
+                newInquiriesCount={newInquiriesCount}
                 onNavigate={() => setDrawerOpen(false)}
               />
             </motion.aside>
@@ -140,13 +155,61 @@ export default function AdminShell({
   );
 }
 
+/**
+ * Keeps the "New Queries" badge in sync after the initial server-rendered
+ * count. The inquiries table is in the supabase_realtime publication
+ * specifically for this — on any insert/update we re-fetch the exact count
+ * rather than trying to patch it locally, so it self-corrects even across
+ * multiple open admin tabs.
+ */
+function useNewInquiriesCount(initialCount: number) {
+  const [count, setCount] = useState(initialCount);
+
+  useEffect(() => {
+    setCount(initialCount);
+  }, [initialCount]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+
+    const refresh = async () => {
+      const next = await countNewInquiries(supabase);
+      if (!cancelled) setCount(next);
+    };
+
+    const channel = supabase
+      .channel("admin-new-inquiries")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "inquiries" },
+        refresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "inquiries" },
+        refresh
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return count;
+}
+
 function SidebarContent({
   displayName,
   initials,
+  newInquiriesCount,
   onNavigate,
 }: {
   displayName: string;
   initials: string;
+  newInquiriesCount: number;
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
@@ -226,6 +289,8 @@ function SidebarContent({
             }
 
             const active = isActive(item.href!);
+            const badgeCount = item.href === "/admin/queries" ? newInquiriesCount : 0;
+
             return (
               <li key={item.label} className="relative">
                 {active && (
@@ -239,7 +304,12 @@ function SidebarContent({
                   }`}
                 >
                   <Icon size={17} strokeWidth={1.8} className={active ? "text-red" : ""} />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {badgeCount > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1.5 text-[11px] font-semibold leading-none text-white">
+                      {badgeCount > 99 ? "99+" : badgeCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             );

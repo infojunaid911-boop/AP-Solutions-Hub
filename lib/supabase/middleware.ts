@@ -66,21 +66,14 @@ export async function updateSession(request: NextRequest) {
     // Any authenticated visit to a gated admin path (including the login
     // page itself) needs a role check so we route to the right place in a
     // single redirect rather than bouncing through /admin first.
-    const { data, error } = await supabase
-  .from("profiles")
-  .select("id, email, role")
-  .eq("id", user.id)
-  .single();
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, email, role")
+      .eq("id", user.id)
+      .single();
 
-console.log("========== ADMIN DEBUG ==========");
-console.log("AUTH USER ID:", user.id);
-console.log("AUTH EMAIL:", user.email);
-console.log("PROFILE DATA:", data);
-console.log("PROFILE ERROR:", error);
-console.log("================================");
-
-const role = (data as { role?: string } | null)?.role;
-const isAdmin = role === "admin";
+    const role = (data as { role?: string } | null)?.role;
+    const isAdmin = role === "admin";
 
     if (isLoginRoute) {
       return isAdmin ? redirectTo(DEFAULT_ADMIN_PATH) : redirectTo(UNAUTHORIZED_PATH);

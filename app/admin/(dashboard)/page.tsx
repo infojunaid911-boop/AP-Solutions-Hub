@@ -130,7 +130,7 @@ export default async function AdminDashboardPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link
-                        href="/admin/queries"
+                        href={`/admin/queries?id=${inquiry.id}`}
                         className="text-[13px] font-semibold text-ink/60 transition-colors hover:text-red"
                       >
                         View

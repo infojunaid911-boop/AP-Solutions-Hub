@@ -3,24 +3,11 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Clock, MessageCircle, ShieldCheck } from "lucide-react";
+import { submitInquiryAction } from "@/app/contact/actions";
+import { CONTACT_BUDGET_OPTIONS, CONTACT_SERVICE_OPTIONS } from "@/lib/inquiries";
 
-const SERVICE_OPTIONS = [
-  "Website Development",
-  "Dashboard Development",
-  "Digital Marketing",
-  "Graphic Design",
-  "3D Architecture",
-  "Social Media Management",
-  "Other",
-];
-
-const BUDGET_OPTIONS = [
-  "Under $1,000",
-  "$1,000 – $5,000",
-  "$5,000 – $15,000",
-  "$15,000+",
-  "Not sure yet",
-];
+const SERVICE_OPTIONS = CONTACT_SERVICE_OPTIONS;
+const BUDGET_OPTIONS = CONTACT_BUDGET_OPTIONS;
 
 type FormState = {
   fullName: string;
@@ -52,10 +39,20 @@ export default function Contact() {
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Honeypot: real visitors never see or fill this field. Any bot that
+  // fills every input on the page will trip it.
+  const [website, setWebsite] = useState("");
+  // Submissions faster than a human can plausibly fill the form are
+  // treated as spam server-side too — see app/contact/actions.ts.
+  const [startedAt, setStartedAt] = useState(() => Date.now());
 
   const update = (field: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if (formError) setFormError(null);
   };
 
   const validate = (): boolean => {
@@ -68,18 +65,52 @@ export default function Contact() {
     if (!form.whatsapp.trim()) next.whatsapp = "WhatsApp number is required.";
     if (!form.service) next.service = "Select the service you need.";
     if (!form.budget) next.budget = "Select a budget range.";
-    if (!form.description.trim()) next.description = "Tell us a little about your project.";
+    if (!form.description.trim() || form.description.trim().length < 20)
+      next.description = "Tell us a little more about your project (at least 20 characters).";
 
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!validate()) return;
+    if (submitting) return;
 
-    // TODO: wire this up to your backend / email service / CRM.
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      const result = await submitInquiryAction({
+        fullName: form.fullName,
+        businessName: form.businessName,
+        email: form.email,
+        whatsapp: form.whatsapp,
+        service: form.service,
+        budget: form.budget,
+        description: form.description,
+        website,
+        startedAt,
+      });
+
+      if (result.ok) {
+        setSubmitted(true);
+      } else {
+        setFormError(result.error);
+      }
+    } catch {
+      setFormError("Something went wrong. Please try again in a moment.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm(INITIAL_STATE);
+    setErrors({});
+    setFormError(null);
+    setWebsite("");
+    setStartedAt(Date.now());
+    setSubmitted(false);
   };
 
   const inputClass = (hasError?: string) =>
@@ -144,13 +175,7 @@ export default function Contact() {
                   <p className="mt-2.5 max-w-sm text-[15px] leading-relaxed text-ink/55">
                     We&apos;ll get back to you soon.
                   </p>
-                  <button
-                    onClick={() => {
-                      setForm(INITIAL_STATE);
-                      setSubmitted(false);
-                    }}
-                    className="mt-8 text-[13.5px] font-semibold text-red underline-offset-4 hover:underline"
-                  >
+                  <button onClick={resetForm} className="mt-8 text-[13.5px] font-semibold text-red underline-offset-4 hover:underline">
                     Send another inquiry
                   </button>
                 </motion.div>
@@ -165,6 +190,23 @@ export default function Contact() {
                   noValidate
                   className="grid grid-cols-1 gap-5 sm:grid-cols-2"
                 >
+                  {/* Honeypot — hidden from real visitors, left as bait for bots. */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden"
+                  >
+                    <label htmlFor="website">Leave this field empty</label>
+                    <input
+                      type="text"
+                      id="website"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                    />
+                  </div>
+
                   <Field label="Full Name" error={errors.fullName}>
                     <input
                       type="text"
@@ -245,12 +287,17 @@ export default function Contact() {
                     />
                   </Field>
 
+                  {formError && (
+                    <p className="sm:col-span-2 text-[13px] text-red">{formError}</p>
+                  )}
+
                   <div className="sm:col-span-2">
                     <button
                       type="submit"
-                      className="inline-flex w-full items-center justify-center rounded-full bg-ink px-8 py-4 text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-red sm:w-auto"
+                      disabled={submitting}
+                      className="inline-flex w-full items-center justify-center rounded-full bg-ink px-8 py-4 text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-red disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                     >
-                      Send Project Inquiry
+                      {submitting ? "Sending..." : "Send Project Inquiry"}
                     </button>
                   </div>
                 </motion.form>
