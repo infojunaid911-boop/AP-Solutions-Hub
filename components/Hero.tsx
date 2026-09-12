@@ -136,7 +136,7 @@ export default function Hero() {
             className="absolute left-0 top-2 w-[68%] overflow-hidden rounded-xl border border-ink/10 bg-white shadow-[0_20px_50px_-15px_rgba(10,10,10,0.18)]"
           >
             <img
-              src="/previews/herowebsites.jpeg"
+              src="/previews/herowebsites.jpg"
               alt="AP Solutions Hub Website Development"
               className="block h-auto w-full object-cover"
             />
@@ -154,7 +154,7 @@ export default function Hero() {
             className="absolute right-0 top-24 w-[62%] overflow-hidden rounded-xl border border-ink/10 bg-white shadow-[0_20px_50px_-15px_rgba(10,10,10,0.3)] lg:top-28"
           >
             <img
-              src="/previews/herodashboard.jpeg"
+              src="/previews/herodashboard.jpg"
               alt="AP Solutions Hub Business Dashboard"
               className="block h-auto w-full object-cover"
             />
@@ -172,7 +172,7 @@ export default function Hero() {
             className="absolute bottom-2 left-4 w-[46%] overflow-hidden rounded-xl border border-ink/10 bg-white shadow-[0_20px_50px_-15px_rgba(10,10,10,0.18)] lg:bottom-6"
           >
             <img
-              src="/previews/heromarketing.jpeg"
+              src="/previews/heromarketing.jpg"
               alt="AP Solutions Hub Digital Marketing"
               className="aspect-[4/3] w-full object-cover"
             />
@@ -190,7 +190,7 @@ export default function Hero() {
             className="absolute bottom-10 right-2 flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-ink/10 bg-white shadow-[0_20px_50px_-15px_rgba(10,10,10,0.18)] lg:bottom-16 lg:right-6"
           >
             <img
-              src="/previews/heroarchitecture.jpeg"
+              src="/previews/heroarchitecture.jpg"
               alt="AP Solutions Hub 3D Architecture"
               className="h-full w-full object-cover"
             />
