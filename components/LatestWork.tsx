@@ -240,10 +240,10 @@ export default function LatestWork() {
     animationRef.current = fmAnimate(x, target, TRANSITION);
 
     try {
-      await animationRef.current.finished;
-    } catch {
-      // Animation was interrupted
-    }
+  await animationRef.current?.then(() => {});
+} catch {
+  // Animation was interrupted
+}
 
     manualAnimationRef.current = false;
   };
