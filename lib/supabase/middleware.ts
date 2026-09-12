@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const LOGIN_PATH = "/admin/login";
@@ -16,9 +16,20 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options: CookieOptions;
+          }[]
+        ) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+
           supabaseResponse = NextResponse.next({ request });
+
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -34,6 +45,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
   const isAdminRoute = pathname.startsWith("/admin");
   const isLoginRoute = pathname === LOGIN_PATH;
   const isUnauthorizedRoute = pathname === UNAUTHORIZED_PATH;
@@ -44,16 +56,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirects must carry forward any session cookie that getUser() just
-  // refreshed on `supabaseResponse` — a bare NextResponse.redirect() starts
-  // from a blank response and would silently drop it, which can cause the
-  // user to appear logged out right after being redirected.
+  // refreshed on supabaseResponse.
   const redirectTo = (path: string) => {
     const url = request.nextUrl.clone();
     url.pathname = path;
+
     const response = NextResponse.redirect(url);
+
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       response.cookies.set(cookie);
     });
+
     return response;
   };
 
@@ -63,9 +76,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && (isLoginRoute || !isPublicAdminRoute)) {
-    // Any authenticated visit to a gated admin path (including the login
-    // page itself) needs a role check so we route to the right place in a
-    // single redirect rather than bouncing through /admin first.
+    // Any authenticated visit to a gated admin path needs a role check.
     const { data } = await supabase
       .from("profiles")
       .select("id, email, role")
@@ -76,8 +87,11 @@ export async function updateSession(request: NextRequest) {
     const isAdmin = role === "admin";
 
     if (isLoginRoute) {
-      return isAdmin ? redirectTo(DEFAULT_ADMIN_PATH) : redirectTo(UNAUTHORIZED_PATH);
+      return isAdmin
+        ? redirectTo(DEFAULT_ADMIN_PATH)
+        : redirectTo(UNAUTHORIZED_PATH);
     }
+
     if (!isAdmin) {
       return redirectTo(UNAUTHORIZED_PATH);
     }
