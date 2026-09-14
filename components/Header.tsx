@@ -45,14 +45,17 @@ export default function Header() {
       >
         <div className="mx-auto flex max-w-shell items-center justify-between px-6 py-5 md:px-10">
           {/* Logo */}
-          <a href="#home" className="flex items-center gap-2.5" onClick={() => setActive("Home")}>
-            <span className="flex h-8 w-8 items-center justify-center rounded-[6px] bg-ink text-sm font-display font-bold text-white">
-              AP
-            </span>
-            <span className="font-display text-[15px] font-semibold tracking-tight text-ink">
-              Solutions Hub
-            </span>
-          </a>
+<a
+  href="#home"
+  className="flex items-center"
+  onClick={() => setActive("Home")}
+>
+  <img
+    src="/previews/headerlogo.png"
+    alt="AP Solutions Hub"
+    className="h-8 w-auto object-contain"
+  />
+</a>
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-9 lg:flex">
