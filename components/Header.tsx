@@ -53,7 +53,7 @@ export default function Header() {
   <img
     src="/previews/headerlogo.png"
     alt="AP Solutions Hub"
-    className="h-8 w-auto object-contain"
+    className="h-7 w-auto object-contain"
   />
 </a>
 
@@ -79,7 +79,7 @@ export default function Header() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             <a
-              href="https://wa.me/10000000000"
+              href="https://wa.me/+923180268771"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat on WhatsApp"

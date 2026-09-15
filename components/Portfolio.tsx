@@ -1,58 +1,48 @@
-import { createClient } from "@/lib/supabase/server";
-import { unpackDescription } from "@/lib/portfolio/description";
-import PortfolioClient, { type PublicPortfolioItem } from "./PortfolioClient";
+import { getPublishedPortfolioItems } from "@/lib/portfolio/getPortfolioItems";
+import PortfolioPreview from "./PortfolioPreview";
 
-// Reads live from Supabase on every request (the server client here touches
-// cookies(), which already opts this route out of static caching) — so
-// anything published in the admin panel appears here immediately, with no
-// redeploy or code change needed.
+// Fixed preview size: bounded so the homepage section stays a predictable,
+// sensible size as more work gets uploaded from the admin panel. The full,
+// unbounded archive lives at /portfolio.
+const PREVIEW_LIMIT = 12;
+
 export default async function Portfolio() {
-  const supabase = await createClient();
+  const items = await getPublishedPortfolioItems(PREVIEW_LIMIT);
 
-  const { data: projectsData } = await supabase
-    .from("portfolio_projects")
-    .select("id, title, category, description, client_name, cover_image")
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
+  return (
+    <section
+      id="portfolio"
+      className="relative overflow-hidden bg-offwhite py-24 md:py-32"
+    >
+      {/* Soft background decoration */}
+      <div className="pointer-events-none absolute left-[-180px] top-[15%] h-[420px] w-[420px] rounded-full bg-red/[0.025] blur-3xl" />
+      <div className="pointer-events-none absolute bottom-[-180px] right-[-100px] h-[500px] w-[500px] rounded-full bg-ink/[0.025] blur-3xl" />
 
-  const projects = projectsData ?? [];
-  const projectIds = projects.map((p) => p.id);
+      <div className="relative mx-auto max-w-shell px-5 md:px-10">
+        {/* ================= HEADER ================= */}
+        <div className="max-w-3xl">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="h-px w-8 bg-red" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-red">
+              Selected Work
+            </span>
+          </div>
 
-  const imagesByProject = new Map<string, string[]>();
-  if (projectIds.length > 0) {
-    const { data: imagesData } = await supabase
-      .from("portfolio_images")
-      .select("project_id, image_url, display_order")
-      .in("project_id", projectIds)
-      .order("display_order", { ascending: true });
+          <h2 className="font-display text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-ink sm:text-5xl md:text-[4rem]">
+            Explore our
+            <span className="block text-ink/35">creative work.</span>
+          </h2>
 
-    (imagesData ?? []).forEach((img) => {
-      const list = imagesByProject.get(img.project_id) ?? [];
-      list.push(img.image_url);
-      imagesByProject.set(img.project_id, list);
-    });
-  }
+          <p className="mt-6 max-w-xl text-[15px] leading-7 text-ink/55 md:text-base">
+            From websites and dashboards to branding and 3D
+            visualization — a collection of work built with
+            strategy, creativity and attention to detail.
+          </p>
+        </div>
 
-  const items: PublicPortfolioItem[] = projects
-    .map((project) => {
-      const gallery = imagesByProject.get(project.id) ?? [];
-      const coverImage = project.cover_image ?? gallery[0] ?? null;
-      if (!coverImage) return null; // no image to show — skip rather than break the grid
-
-      const { detailed, short } = unpackDescription(project.description);
-
-      return {
-        id: project.id,
-        title: project.title,
-        category: project.category,
-        coverImage,
-        images: gallery.length > 0 ? gallery : [coverImage],
-        client: project.client_name || "Confidential",
-        services: [project.category],
-        description: detailed || short,
-      };
-    })
-    .filter((item): item is PublicPortfolioItem => item !== null);
-
-  return <PortfolioClient projects={items} />;
+        {/* Masonry gallery + in-page project modal + "View All" (opens /portfolio in a new tab) */}
+        <PortfolioPreview items={items} />
+      </div>
+    </section>
+  );
 }

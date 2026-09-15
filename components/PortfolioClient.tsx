@@ -1,27 +1,184 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import Link from "next/link";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, X } from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { CATEGORY_TABS } from "@/lib/portfolioData";
+import type { PublicPortfolioItem } from "@/lib/portfolio/getPortfolioItems";
+import PortfolioModal from "./PortfolioModal";
 
-export type PublicPortfolioItem = {
-  id: string;
-  title: string;
-  category: string;
-  coverImage: string;
-  images: string[];
-  client: string;
-  services: string[];
-  description: string;
-};
+export type { PublicPortfolioItem };
 
+/* ------------------------------------------------------------------ *
+ *  HERO VISUAL — kinetic discipline index.
+ *
+ *  Every word here comes from the real category list, so it can never
+ *  drift out of sync with the filters. Swap this constant for a custom
+ *  array (e.g. ["Web", "UI/UX", "Brand", "3D", "Marketing"]) if you
+ *  ever want shorter wording in the hero.
+ * ------------------------------------------------------------------ */
+
+const DISCIPLINES = CATEGORY_TABS.filter((tab) => tab !== "All Work");
+
+const CYCLE_MS = 2600;
+
+/** Hairline outline for the resting state, solid ink for the active one. */
+const OUTLINE_STYLE = {
+  WebkitTextFillColor: "transparent",
+  WebkitTextStrokeWidth: "1px",
+  WebkitTextStrokeColor: "currentColor",
+} as const;
+
+const FILLED_STYLE = {
+  WebkitTextStrokeWidth: "1px",
+  WebkitTextStrokeColor: "currentColor",
+} as const;
+
+function DisciplineIndex({ projects }: { projects: PublicPortfolioItem[] }) {
+  const reduce = useReducedMotion() ?? false;
+  const [active, setActive] = useState(0);
+
+  // Real per-category totals — derived from the projects already passed in.
+  const counts = useMemo(() => {
+    const map = new Map<string, number>();
+
+    projects.forEach((project) => {
+      map.set(project.category, (map.get(project.category) ?? 0) + 1);
+    });
+
+    return map;
+  }, [projects]);
+
+  useEffect(() => {
+    if (reduce || DISCIPLINES.length === 0) return;
+
+    const id = window.setInterval(() => {
+      setActive((current) => (current + 1) % DISCIPLINES.length);
+    }, CYCLE_MS);
+
+    return () => window.clearInterval(id);
+  }, [reduce]);
+
+  // Whisper-quiet mouse parallax on the whole index.
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const px = useSpring(mouseX, { stiffness: 45, damping: 20, mass: 0.8 });
+  const py = useSpring(mouseY, { stiffness: 45, damping: 20, mass: 0.8 });
+
+  const stackX = useTransform(px, [-1, 1], [-7, 7]);
+  const stackY = useTransform(py, [-1, 1], [-5, 5]);
+
+  const handleMove = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (reduce) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    mouseX.set(((event.clientX - rect.left) / rect.width - 0.5) * 2);
+    mouseY.set(((event.clientY - rect.top) / rect.height - 0.5) * 2);
+  };
+
+  const handleLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  if (DISCIPLINES.length === 0) return null;
+
+  return (
+    <div onMouseMove={handleMove} onMouseLeave={handleLeave} className="w-full">
+      <motion.div style={{ x: stackX, y: stackY }} className="relative">
+        {/* index rule */}
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 block h-full w-px bg-ink/10"
+        />
+
+        <ul className="flex flex-col gap-1.5 pl-6 sm:gap-2 sm:pl-8">
+          {DISCIPLINES.map((label, index) => {
+            const isActive = index === active;
+            const count = counts.get(label) ?? 0;
+
+            return (
+              <li key={label} className="relative">
+                {/* red marker slides between rows */}
+                <div
+                  aria-hidden
+                  className="absolute -left-6 top-0 flex h-full items-center sm:-left-8"
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="disciplineMarker"
+                      className="block h-5 w-[2px] bg-red sm:h-6"
+                      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  )}
+                </div>
+
+                <motion.div
+                  animate={reduce ? undefined : { x: isActive ? 10 : 0 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-baseline gap-4"
+                >
+                  <span className="relative block font-display text-[26px] font-semibold leading-[1.16] tracking-[-0.035em] sm:text-[33px] lg:text-[39px] xl:text-[43px]">
+                    {/* resting: hairline outline */}
+                    <span className="block text-ink/25" style={OUTLINE_STYLE}>
+                      {label}
+                    </span>
+
+                    {/* active: solid ink, crossfaded on top */}
+                    <motion.span
+                      aria-hidden
+                      className="absolute inset-0 block text-ink"
+                      style={FILLED_STYLE}
+                      animate={{ opacity: isActive ? 1 : 0 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    >
+                      {label}
+                    </motion.span>
+                  </span>
+
+                  <span
+                    className={`shrink-0 text-[10px] font-bold uppercase tracking-[0.2em] tabular-nums transition-colors duration-500 ${
+                      isActive ? "text-red" : "text-ink/20"
+                    }`}
+                  >
+                    {String(count).padStart(2, "0")}
+                  </span>
+                </motion.div>
+              </li>
+            );
+          })}
+        </ul>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ *  PAGE
+ * ------------------------------------------------------------------ */
+
+// The full, dedicated /portfolio archive: every published project, a true
+// Pinterest-style masonry grid (natural image aspect ratios, no cropping),
+// working category filters, and the same project modal used on the
+// homepage preview.
 export default function PortfolioClient({ projects }: { projects: PublicPortfolioItem[] }) {
   const [activeTab, setActiveTab] =
     useState<(typeof CATEGORY_TABS)[number]>("All Work");
 
   const [selected, setSelected] = useState<PublicPortfolioItem | null>(null);
+
+  const reduce = useReducedMotion() ?? false;
 
   const items = useMemo(() => {
     if (activeTab === "All Work") return projects;
@@ -32,58 +189,68 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
   return (
     <section
       id="portfolio"
-      className="relative overflow-hidden bg-offwhite py-24 md:py-32"
+      className="relative overflow-hidden bg-offwhite py-20 md:py-28"
     >
       {/* Soft background decoration */}
       <div className="pointer-events-none absolute left-[-180px] top-[15%] h-[420px] w-[420px] rounded-full bg-red/[0.025] blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-180px] right-[-100px] h-[500px] w-[500px] rounded-full bg-ink/[0.025] blur-3xl" />
 
       <div className="relative mx-auto max-w-shell px-5 md:px-10">
-        {/* ================= HEADER ================= */}
-        <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-15% 0px" }}
-          transition={{
-            duration: 0.7,
-            ease: [0.16, 1, 0.3, 1],
-          }}
-          className="max-w-3xl"
+        {/* Back to home — this page is opened in a new tab from the site */}
+        <Link
+          href="/"
+          className="group mb-12 inline-flex items-center gap-2 text-[13px] font-semibold text-ink/45 transition-colors hover:text-ink"
         >
-          <div className="mb-5 flex items-center gap-3">
-            <span className="h-px w-8 bg-red" />
+          <ArrowLeft
+            size={15}
+            strokeWidth={2.2}
+            className="transition-transform duration-300 group-hover:-translate-x-0.5"
+          />
+          Back to Home
+        </Link>
 
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-red">
-              Selected Work
-            </span>
+        {/* ================= HERO ================= */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-10"
+        >
+          {/* LEFT — type */}
+          <div className="lg:col-span-6">
+            <div className="mb-6 flex items-center gap-3">
+              <span className="h-px w-8 bg-red" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.26em] text-red">
+                Our Work
+              </span>
+            </div>
+
+            <h1 className="font-display text-[2.65rem] font-semibold leading-[0.98] tracking-[-0.04em] text-ink sm:text-[3.5rem] lg:text-[4.25rem] xl:text-[4.75rem]">
+              The complete
+              <span className="block text-ink/30">portfolio archive.</span>
+            </h1>
+
+            <p className="mt-8 max-w-[38ch] text-[15px] leading-[1.75] text-ink/55 md:text-base md:leading-[1.8]">
+              Every project we&apos;ve shipped — websites, dashboards,
+              branding, digital marketing and 3D visualization — in one
+              place, filterable by category.
+            </p>
           </div>
 
-          <h2 className="font-display text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-ink sm:text-5xl md:text-[4rem]">
-            Explore our
-            <span className="block text-ink/35">
-              creative work.
-            </span>
-          </h2>
-
-          <p className="mt-6 max-w-xl text-[15px] leading-7 text-ink/55 md:text-base">
-            From websites and dashboards to branding and 3D
-            visualization — a collection of work built with
-            strategy, creativity and attention to detail.
-          </p>
+          {/* RIGHT — kinetic discipline index */}
+          <div className="w-full lg:col-span-6 lg:pl-10 xl:pl-20">
+            <DisciplineIndex projects={projects} />
+          </div>
         </motion.div>
 
         {/* ================= FILTERS ================= */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{
-            duration: 0.6,
-            delay: 0.1,
-          }}
-          className="mt-10"
+          initial={reduce ? false : { opacity: 0, y: 14 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.12 }}
+          className="mt-16 border-t border-ink/[0.08] pt-7 md:mt-20 md:pt-8"
         >
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 scrollbar-none md:mx-0 md:px-0">
             {CATEGORY_TABS.map((tab) => {
               const active = activeTab === tab;
 
@@ -91,195 +258,92 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`
-                    relative shrink-0 overflow-hidden rounded-full
-                    border px-5 py-2.5
-                    text-[13px] font-semibold
-                    transition-all duration-300
-                    ${
-                      active
-                        ? "border-ink bg-ink text-white shadow-lg shadow-ink/10"
-                        : "border-ink/10 bg-white/70 text-ink/55 hover:border-ink/25 hover:bg-white hover:text-ink"
-                    }
-                  `}
+                  aria-pressed={active}
+                  className={`shrink-0 rounded-full border px-[18px] py-2.5 text-[12.5px] font-semibold transition-all duration-300 ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/25 focus-visible:ring-offset-2 focus-visible:ring-offset-offwhite ${
+                    active
+                      ? "border-ink bg-ink text-white shadow-[0_8px_20px_-10px_rgba(0,0,0,0.55)]"
+                      : "border-ink/[0.12] bg-white/60 text-ink/55 hover:border-ink/30 hover:bg-white hover:text-ink"
+                  }`}
                 >
                   {tab}
                 </button>
               );
             })}
           </div>
+
+          {/* Index line */}
+          <div className="mt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-ink/30 tabular-nums">
+            <span aria-hidden>
+              {items.length} / {projects.length}
+            </span>
+            <span className="sr-only">
+              Showing {items.length} of {projects.length} projects
+            </span>
+          </div>
         </motion.div>
 
-        {/* ================= PINTEREST GRID ================= */}
+        {/* ================= PINTEREST MASONRY GRID ================= */}
+        {/*
+          True masonry: CSS multi-column layout + break-inside-avoid, and
+          every image renders at ITS OWN natural aspect ratio (width={0}
+          height={0} + style width:100%/height:auto tells next/image to
+          size the box from the actual file, not a fixed box) — no
+          cropping, no forced square/equal-height tiles.
+        */}
         <motion.div
           layout
-          className="
-            mt-12
-            columns-2
-            gap-3
-            sm:columns-2
-            md:columns-3
-            md:gap-4
-            lg:columns-4
-            xl:columns-5
-          "
+          className="mt-10 columns-2 gap-4 sm:columns-2 md:columns-3 lg:columns-4 lg:gap-5 xl:columns-5"
         >
           <AnimatePresence mode="popLayout">
             {items.map((item, index) => (
               <motion.button
                 key={item.id}
                 layout
-                initial={{
-                  opacity: 0,
-                  y: 30,
-                  scale: 0.96,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }}
-                exit={{
-                  opacity: 0,
-                  scale: 0.94,
-                }}
+                initial={reduce ? false : { opacity: 0, y: 22 }}
+                whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.1, margin: "0px 0px -40px 0px" }}
+                exit={reduce ? undefined : { opacity: 0, scale: 0.96 }}
                 transition={{
-                  duration: 0.45,
-                  delay: Math.min(index * 0.035, 0.25),
+                  duration: 0.5,
+                  delay: (index % 5) * 0.045,
                   ease: [0.16, 1, 0.3, 1],
                 }}
                 onClick={() => setSelected(item)}
-                className="
-                  group
-                  relative
-                  mb-3
-                  block
-                  w-full
-                  break-inside-avoid
-                  overflow-hidden
-                  rounded-[14px]
-                  bg-mist
-                  text-left
-                  shadow-[0_2px_10px_rgba(0,0,0,0.035)]
-                  transition-all
-                  duration-500
-                  hover:-translate-y-1
-                  hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
-                  md:mb-4
-                  md:rounded-[16px]
-                "
+                className="group mb-4 block w-full break-inside-avoid rounded-[18px] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 focus-visible:ring-offset-4 focus-visible:ring-offset-offwhite lg:mb-5"
               >
-                {/* IMAGE */}
-                <div className="relative w-full overflow-hidden">
+                {/* Card surface — lift + shadow live here so they never
+                    fight framer-motion's inline transform on the button. */}
+                <div className="relative overflow-hidden rounded-[18px] bg-mist ring-1 ring-ink/[0.06] transition-all duration-500 ease-premium group-hover:-translate-y-[5px] group-hover:shadow-[0_20px_45px_-18px_rgba(0,0,0,0.28)] group-hover:ring-ink/[0.14]">
+                  {/* IMAGE — natural size, never cropped or forced to a fixed ratio */}
                   <Image
                     src={item.coverImage}
                     alt={item.title}
-                    width={1000}
-                    height={1000}
+                    width={0}
+                    height={0}
                     loading={index < 5 ? "eager" : "lazy"}
-                    sizes="
-                      (max-width: 640px) 50vw,
-                      (max-width: 1024px) 33vw,
-                      (max-width: 1280px) 25vw,
-                      20vw
-                    "
-                    className="
-                      block
-                      h-auto
-                      w-full
-                      object-cover
-                      transition-transform
-                      duration-700
-                      ease-[cubic-bezier(0.16,1,0.3,1)]
-                      group-hover:scale-[1.045]
-                    "
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                    className="block w-full transition-transform duration-700 ease-premium group-hover:scale-[1.03]"
+                    style={{ width: "100%", height: "auto" }}
                   />
 
                   {/* DARK HOVER */}
-                  <div
-                    className="
-                      absolute
-                      inset-0
-                      bg-gradient-to-t
-                      from-black/75
-                      via-black/5
-                      to-transparent
-                      opacity-0
-                      transition-opacity
-                      duration-400
-                      group-hover:opacity-100
-                    "
-                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                   {/* PROJECT INFO */}
-                  <div
-                    className="
-                      absolute
-                      inset-x-0
-                      bottom-0
-                      translate-y-3
-                      p-4
-                      opacity-0
-                      transition-all
-                      duration-400
-                      ease-out
-                      group-hover:translate-y-0
-                      group-hover:opacity-100
-                    "
-                  >
-                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/65">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 p-4 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 md:p-5">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">
                       {item.category}
                     </span>
 
-                    <div className="mt-1.5 flex items-end justify-between gap-3">
-                      <span className="font-display text-[14px] font-semibold leading-tight text-white md:text-[15px]">
+                    <div className="mt-2 flex items-end justify-between gap-3">
+                      <span className="font-display text-[14px] font-semibold leading-snug tracking-[-0.01em] text-white md:text-[15px]">
                         {item.title}
                       </span>
 
-                      <span
-                        className="
-                          flex
-                          h-8
-                          w-8
-                          shrink-0
-                          items-center
-                          justify-center
-                          rounded-full
-                          bg-white
-                          text-ink
-                          transition-transform
-                          duration-300
-                          group-hover:rotate-45
-                        "
-                      >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-ink transition-transform duration-500 ease-premium group-hover:rotate-45">
                         <ArrowUpRight size={14} strokeWidth={2.2} />
                       </span>
                     </div>
-                  </div>
-
-                  {/* TOP CATEGORY */}
-                  <div
-                    className="
-                      absolute
-                      left-3
-                      top-3
-                      rounded-full
-                      bg-white/90
-                      px-2.5
-                      py-1
-                      text-[9px]
-                      font-bold
-                      uppercase
-                      tracking-wider
-                      text-ink/65
-                      opacity-0
-                      backdrop-blur-sm
-                      transition-opacity
-                      duration-300
-                      group-hover:opacity-100
-                    "
-                  >
-                    {item.category}
                   </div>
                 </div>
               </motion.button>
@@ -294,6 +358,7 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
             animate={{ opacity: 1 }}
             className="py-24 text-center"
           >
+            <span className="mx-auto mb-5 block h-px w-10 bg-red/50" />
             <p className="text-sm text-ink/40">
               No projects found in this category.
             </p>
@@ -302,239 +367,7 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
       </div>
 
       {/* ================= MODAL ================= */}
-      <ProjectModal
-        item={selected}
-        onClose={() => setSelected(null)}
-      />
+      <PortfolioModal item={selected} onClose={() => setSelected(null)} />
     </section>
-  );
-}
-
-/* =========================================================
-   PROJECT MODAL
-========================================================= */
-
-function ProjectModal({
-  item,
-  onClose,
-}: {
-  item: PublicPortfolioItem | null;
-  onClose: () => void;
-}) {
-  const [activeImage, setActiveImage] = useState(0);
-
-  useEffect(() => {
-    if (item) {
-      setActiveImage(0);
-    }
-  }, [item]);
-
-  /* Lock body scroll */
-  useEffect(() => {
-    document.body.style.overflow = item ? "hidden" : "";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [item]);
-
-  /* Escape key */
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKey);
-
-    return () => {
-      window.removeEventListener("keydown", handleKey);
-    };
-  }, [onClose]);
-
-  return (
-    <AnimatePresence>
-      {item && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="
-            fixed
-            inset-0
-            z-[70]
-            flex
-            items-center
-            justify-center
-            bg-ink/75
-            p-3
-            backdrop-blur-md
-            sm:p-5
-            md:p-8
-          "
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 30,
-              scale: 0.97,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              y: 20,
-              scale: 0.97,
-            }}
-            transition={{
-              duration: 0.4,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            onClick={(event) => event.stopPropagation()}
-            className="
-              max-h-[92vh]
-              w-full
-              max-w-5xl
-              overflow-y-auto
-              rounded-[20px]
-              bg-white
-              shadow-2xl
-              md:rounded-[24px]
-            "
-          >
-            {/* HERO IMAGE */}
-            <div className="relative aspect-[16/10] w-full overflow-hidden bg-mist md:aspect-[16/9]">
-              <Image
-                src={item.images[activeImage]}
-                alt={item.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 1024px"
-                className="object-cover"
-                priority
-              />
-
-              {/* Image gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-              {/* CLOSE */}
-              <button
-                aria-label="Close project"
-                onClick={onClose}
-                className="
-                  absolute
-                  right-4
-                  top-4
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-white/90
-                  text-ink
-                  shadow-lg
-                  backdrop-blur
-                  transition-all
-                  hover:scale-105
-                  hover:bg-white
-                  md:right-5
-                  md:top-5
-                "
-              >
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-
-            {/* THUMBNAILS */}
-            {item.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto border-b border-ink/8 p-4 md:p-5">
-                {item.images.map((src, index) => (
-                  <button
-                    key={`${src}-${index}`}
-                    onClick={() => setActiveImage(index)}
-                    className={`
-                      relative
-                      h-14
-                      w-20
-                      shrink-0
-                      overflow-hidden
-                      rounded-lg
-                      transition-all
-                      duration-200
-                      ${
-                        index === activeImage
-                          ? "opacity-100 ring-2 ring-red ring-offset-2"
-                          : "opacity-50 hover:opacity-90"
-                      }
-                    `}
-                  >
-                    <Image
-                      src={src}
-                      alt=""
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* DETAILS */}
-            <div className="p-6 md:p-10">
-              <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                <div className="max-w-2xl">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-red">
-                    {item.category}
-                  </span>
-
-                  <h3 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-ink md:text-4xl">
-                    {item.title}
-                  </h3>
-                </div>
-
-                <div className="hidden shrink-0 rounded-full border border-ink/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-ink/45 md:block">
-                  Selected Work
-                </div>
-              </div>
-
-              {/* META */}
-              <div className="mt-8 grid grid-cols-1 gap-6 border-y border-ink/8 py-7 sm:grid-cols-2">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink/35">
-                    Client Industry
-                  </span>
-
-                  <p className="mt-2 text-[15px] font-medium text-ink">
-                    {item.client}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink/35">
-                    Services Provided
-                  </span>
-
-                  <p className="mt-2 text-[15px] font-medium leading-6 text-ink">
-                    {item.services.join(", ")}
-                  </p>
-                </div>
-              </div>
-
-              {/* DESCRIPTION */}
-              <p className="mt-7 max-w-3xl text-[15px] leading-7 text-ink/60 md:text-base md:leading-8">
-                {item.description}
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }

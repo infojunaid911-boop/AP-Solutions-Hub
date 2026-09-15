@@ -25,15 +25,14 @@ export default function Footer() {
       <div className="mx-auto max-w-shell px-6 md:px-10">
         <div className="grid gap-12 pb-16 lg:grid-cols-[1.3fr_1fr_1fr_1fr] lg:gap-8">
           {/* Brand */}
-          <div>
-            <span className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-[6px] bg-white text-sm font-display font-bold text-ink">
-                AP
-              </span>
-              <span className="font-display text-[15px] font-semibold text-white">
-                AP Solutions Hub
-              </span>
-            </span>
+<div>
+  <span className="flex items-center gap-2.5">
+    <img
+  src="/previews/footerlogo.png"
+  alt="AP Solutions Hub"
+  className="h-8 w-auto object-contain"
+/>
+     </span>
             <p className="mt-5 max-w-[30ch] text-[14px] leading-relaxed text-white/50">
               We build digital solutions that help businesses grow.
             </p>
