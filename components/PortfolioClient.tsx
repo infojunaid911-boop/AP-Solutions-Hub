@@ -101,45 +101,25 @@ function PortfolioHero() {
   const reduce = useReducedMotion() ?? false;
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // ------------------------------------------------------------
-  // Cursor parallax
-  // ------------------------------------------------------------
+  // Subtle cursor parallax. The values are intentionally small so the
+  // composition stays locked to the visual grid.
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 42, damping: 20, mass: 0.7 });
+  const springY = useSpring(mouseY, { stiffness: 42, damping: 20, mass: 0.7 });
 
-  const springX = useSpring(mouseX, {
-    stiffness: 38,
-    damping: 18,
-    mass: 0.7,
-  });
-
-  const springY = useSpring(mouseY, {
-    stiffness: 38,
-    damping: 18,
-    mass: 0.7,
-  });
-
-  const robotMouseX = useTransform(springX, [-1, 1], [-12, 12]);
-  const robotMouseY = useTransform(springY, [-1, 1], [-8, 8]);
-
+  const robotMouseX = useTransform(springX, [-1, 1], [-10, 10]);
+  const robotMouseY = useTransform(springY, [-1, 1], [-7, 7]);
   const typeMouseX = useTransform(springX, [-1, 1], [-3, 3]);
   const typeMouseY = useTransform(springY, [-1, 1], [-2, 2]);
-
   const pillMouseX = useTransform(springX, [-1, 1], [-4, 4]);
   const pillMouseY = useTransform(springY, [-1, 1], [-3, 3]);
 
   const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (reduce) return;
-
     const rect = event.currentTarget.getBoundingClientRect();
-
-    mouseX.set(
-      ((event.clientX - rect.left) / rect.width - 0.5) * 2
-    );
-
-    mouseY.set(
-      ((event.clientY - rect.top) / rect.height - 0.5) * 2
-    );
+    mouseX.set(((event.clientX - rect.left) / rect.width - 0.5) * 2);
+    mouseY.set(((event.clientY - rect.top) / rect.height - 0.5) * 2);
   };
 
   const handleMouseLeave = () => {
@@ -147,9 +127,6 @@ function PortfolioHero() {
     mouseY.set(0);
   };
 
-  // ------------------------------------------------------------
-  // Scroll animation
-  // ------------------------------------------------------------
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
@@ -160,23 +137,20 @@ function PortfolioHero() {
     [0, 1],
     [0, reduce ? 0 : -28]
   );
-
   const scrollRobotY = useTransform(
     scrollYProgress,
     [0, 1],
-    [0, reduce ? 0 : -52]
+    [0, reduce ? 0 : -46]
   );
-
   const scrollContentY = useTransform(
     scrollYProgress,
     [0, 1],
     [0, reduce ? 0 : 18]
   );
-
   const scrollContentOpacity = useTransform(
     scrollYProgress,
     [0, 1],
-    [1, reduce ? 1 : 0.5]
+    [1, reduce ? 1 : 0.55]
   );
 
   const typeY = useCombinedMotionValue(typeMouseY, scrollTypeY);
@@ -187,493 +161,166 @@ function PortfolioHero() {
       ref={sectionRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="
-        relative
-        -mx-5
-        overflow-hidden
-        px-5
-        pt-4
-        sm:-mx-6
-        sm:px-6
-        md:-mx-10
-        md:px-10
-        md:pt-6
-        lg:pt-8
-      "
+      className="relative -mx-5 overflow-hidden px-5 pb-2 pt-0 sm:-mx-6 sm:px-6 md:-mx-10 md:px-10"
     >
       <HeroGridLines />
 
-      {/* Accessible real heading */}
-      <h1 className="sr-only">
-        AP Solutions Hub — Portfolio Archive
-      </h1>
+      <h1 className="sr-only">AP Solutions Hub — Portfolio Archive</h1>
 
-      {/* ======================================================
-          GIANT PORTFOLIO ARCHIVE HEADING
-          ====================================================== */}
+      {/* Small page context link — intentionally close to the navbar. */}
+      <motion.div
+        initial={reduce ? false : { opacity: 0, x: -8 }}
+        animate={reduce ? undefined : { opacity: 1, x: 0 }}
+        transition={{ duration: 0.55, delay: 0.05, ease: EASE_PREMIUM }}
+        className="relative z-40 pt-1 md:pt-2"
+      >
+        <Link
+          href="/"
+          className="group inline-flex items-center gap-2 text-[12px] font-medium text-ink/45 transition-colors duration-300 hover:text-red sm:text-[13px]"
+        >
+          <ArrowLeft
+            size={14}
+            strokeWidth={2.2}
+            className="transition-transform duration-300 group-hover:-translate-x-0.5"
+          />
+          Back to Home
+        </Link>
+      </motion.div>
 
+      {/* ============================================================
+          GIANT TITLE
+          ============================================================ */}
       <motion.div
         aria-hidden
-        style={
-          reduce
-            ? undefined
-            : {
-                x: typeMouseX,
-                y: typeY,
-              }
-        }
-        className="
-          relative
-          z-10
-          w-full
-          overflow-visible
-        "
+        style={reduce ? undefined : { x: typeMouseX, y: typeY }}
+        className="relative z-10 mt-8 w-full overflow-visible sm:mt-9 md:mt-10 lg:mt-8"
       >
-        <div
-          className="
-            flex
-            w-full
-            items-baseline
-            whitespace-nowrap
-          "
-        >
+        <div className="flex w-full items-baseline whitespace-nowrap">
           <RevealWord
-            delay={0.05}
+            delay={0.08}
             reduce={reduce}
-            className="
-              font-display
-              text-[clamp(3.6rem,10.4vw,9.8rem)]
-              font-bold
-              leading-[0.82]
-              tracking-[-0.055em]
-              text-ink
-            "
+            className="font-display text-[clamp(2.6rem,7.8vw,7rem)] font-bold leading-[0.78] tracking-[-0.06em] text-ink sm:text-[clamp(2.8rem,7.84vw,7.6rem)]"
             style={OUTLINE_STYLE}
           >
             PORTFOLIO
           </RevealWord>
 
           <RevealWord
-            delay={0.3}
+            delay={0.28}
             reduce={reduce}
-            className="
-              ml-[clamp(0.5rem,1.2vw,1.5rem)]
-              font-display
-              text-[clamp(3.6rem,10.4vw,9.8rem)]
-              font-black
-              leading-[0.82]
-              tracking-[-0.065em]
-              text-ink
-            "
+            className="ml-[clamp(0.4rem,0.9vw,1rem)] font-display text-[clamp(2.4rem,7.6vw,7rem)] font-black leading-[0.78] tracking-[-0.065em] text-ink sm:text-[clamp(2.8rem,7.84vw,7.6rem)]"
           >
             ARCHIVE
           </RevealWord>
         </div>
       </motion.div>
 
-      {/* ======================================================
-          MAIN HERO STAGE
-          Fixed visual relationship between:
-          LEFT CONTENT / ROBOT / RIGHT PILLS
-          ====================================================== */}
-
-      <div
-        className="
-          relative
-          z-10
-          mt-10
-          min-h-[540px]
-          sm:mt-12
-          sm:min-h-[590px]
-          md:mt-14
-          md:min-h-[620px]
-          lg:mt-8
-          lg:min-h-[540px]
-          xl:min-h-[575px]
-        "
-      >
-        {/* ----------------------------------------------------
-            LEFT CONTENT
-            ---------------------------------------------------- */}
-
+      {/* ============================================================
+          CENTRAL HERO STAGE
+          The robot is deliberately centered and oversized. It sits
+          behind the supporting content but in front of the lower edge
+          of the giant title, matching the supplied visual direction.
+          ============================================================ */}
+      <div className="relative z-20 mt-3 min-h-[535px] sm:mt-4 sm:min-h-[590px] md:min-h-[625px] lg:mt-1 lg:min-h-[560px] xl:min-h-[590px]">
+        {/* Robot — central visual anchor */}
         <motion.div
-          style={
-            reduce
-              ? undefined
-              : {
-                  y: scrollContentY,
-                  opacity: scrollContentOpacity,
-                }
-          }
-          initial={
-            reduce
-              ? false
-              : {
-                  opacity: 0,
-                  y: 22,
-                }
-          }
-          animate={
-            reduce
-              ? undefined
-              : {
-                  opacity: 1,
-                  y: 0,
-                }
-          }
-          transition={{
-            duration: 0.75,
-            delay: 0.48,
-            ease: EASE_PREMIUM,
-          }}
-          className="
-            absolute
-            bottom-4
-            left-0
-            z-30
-            w-full
-            max-w-[440px]
-            lg:bottom-5
-            lg:w-[32%]
-            xl:max-w-[470px]
-          "
-        >
-          <div>
-            <h2
-              className="
-                font-display
-                text-[1.65rem]
-                font-semibold
-                leading-[1.13]
-                tracking-[-0.035em]
-                text-ink
-                sm:text-[1.9rem]
-                md:text-[2.05rem]
-                lg:text-[2rem]
-                xl:text-[2.25rem]
-              "
-            >
-              We build smart digital solutions that work for your business.
-            </h2>
-
-            <p
-              className="
-                mt-4
-                max-w-[36ch]
-                text-[14px]
-                leading-[1.7]
-                text-ink/55
-                sm:text-[15px]
-              "
-            >
-              Custom websites, powerful dashboards, automation and AI tools —
-              all in one place.
-            </p>
-          </div>
-
-          <Link
-            href="/#contact"
-            className="
-              group
-              mt-7
-              inline-flex
-              w-fit
-              items-center
-              gap-2.5
-              rounded-full
-              bg-ink
-              px-6
-              py-3.5
-              text-[13px]
-              font-semibold
-              text-white
-              shadow-[0_14px_30px_-14px_rgba(10,10,10,0.55)]
-              transition-all
-              duration-300
-              ease-premium
-              hover:-translate-y-0.5
-              hover:shadow-[0_20px_40px_-16px_rgba(10,10,10,0.6)]
-            "
-          >
-            Let&apos;s collaborate
-
-            <ArrowUpRight
-              size={15}
-              strokeWidth={2.3}
-              className="
-                transition-transform
-                duration-300
-                group-hover:translate-x-0.5
-                group-hover:-translate-y-0.5
-              "
-            />
-          </Link>
-        </motion.div>
-
-        {/* ----------------------------------------------------
-            ROBOT
-            ---------------------------------------------------- */}
-
-        <motion.div
-          style={
-            reduce
-              ? undefined
-              : {
-                  x: robotMouseX,
-                  y: robotY,
-                }
-          }
-          initial={
-            reduce
-              ? false
-              : {
-                  opacity: 0,
-                  y: 38,
-                  scale: 0.94,
-                }
-          }
-          animate={
-            reduce
-              ? undefined
-              : {
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }
-          }
-          transition={{
-            duration: 1,
-            delay: 0.22,
-            ease: EASE_PREMIUM,
-          }}
-          className="
-            absolute
-            bottom-0
-            left-1/2
-            z-20
-            h-[390px]
-            w-[330px]
-            -translate-x-1/2
-            sm:h-[455px]
-            sm:w-[390px]
-            md:h-[510px]
-            md:w-[450px]
-            lg:h-[500px]
-            lg:w-[470px]
-            xl:h-[545px]
-            xl:w-[510px]
-          "
+          style={reduce ? undefined : { x: robotMouseX, y: robotY }}
+          initial={reduce ? false : { opacity: 0, y: 34, scale: 0.9 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1, delay: 0.18, ease: EASE_PREMIUM }}
+          className="absolute bottom-0 left-1/4 z-20 h-[500px] w-[450px] -translate-x-1/2 sm:h-[590px] sm:w-[530px] md:h-[670px] md:w-[610px] lg:h-[700px] lg:w-[640px] xl:h-[735px] xl:w-[675px]"
         >
           <Image
             src="/previews/robothero.png"
             alt="AP Solutions Hub robot"
             fill
             priority
-            sizes="
-              (max-width: 640px) 80vw,
-              (max-width: 768px) 55vw,
-              (max-width: 1024px) 45vw,
-              36vw
-            "
-            className="
-              object-contain
-              object-bottom
-            "
+            sizes="(max-width: 640px) 88vw, (max-width: 1024px) 55vw, 42vw"
+            className="object-contain object-bottom"
           />
         </motion.div>
 
-        {/* ----------------------------------------------------
-            RIGHT SERVICE PILLS
-            IMPORTANT:
-            They are now independently positioned so they
-            NEVER overlap the giant heading.
-            ---------------------------------------------------- */}
-
-        <div
-          className="
-            absolute
-            right-0
-            top-2
-            z-40
-            hidden
-            flex-col
-            items-end
-            gap-3
-            sm:flex
-          "
+        {/* LEFT CONTENT */}
+        <motion.div
+          style={
+            reduce
+              ? undefined
+              : { y: scrollContentY, opacity: scrollContentOpacity }
+          }
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          animate={reduce ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.72, delay: 0.5, ease: EASE_PREMIUM }}
+          className="absolute bottom-5 left-0 z-40 w-[min(34%,430px)] min-w-0 sm:bottom-7 md:bottom-8 lg:w-[31%] xl:w-[30%]"
         >
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-red sm:text-[12px]">
+            Portfolio Archive
+          </p>
+
+          <h2 className="font-display text-[1.55rem] font-semibold leading-[1.12] tracking-[-0.035em] text-red sm:text-[1.8rem] md:text-[2rem] lg:text-[2.05rem] xl:text-[2.2rem]">
+            We build smart digital solutions that work for your business.
+          </h2>
+
+          <p className="mt-4 max-w-[34ch] text-[13px] leading-[1.7] text-red/65 sm:text-[14px]">
+            Custom websites, powerful dashboards, automation and AI tools —
+            all in one place.
+          </p>
+
+          <Link
+            href="/#contact"
+            className="group mt-6 inline-flex items-center gap-2.5 rounded-full bg-red px-6 py-3.5 text-[13px] font-semibold text-white shadow-[0_14px_30px_-14px_rgba(236,29,37,0.45)] transition-all duration-300 ease-premium hover:-translate-y-0.5 hover:bg-[#0A0A0A] hover:shadow-[0_20px_40px_-16px_rgba(10,10,10,0.45)]"
+          >
+            Let&apos;s collaborate
+            <ArrowUpRight
+              size={15}
+              strokeWidth={2.3}
+              className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
+          </Link>
+        </motion.div>
+
+        {/* RIGHT SERVICE PILLS */}
+        <div className="absolute right-0 top-[4.5rem] z-40 hidden flex-col items-end gap-3 sm:flex lg:top-[4.75rem] xl:top-[5rem]">
           {SERVICE_PILLS.map(({ label, Icon }, index) => (
             <motion.div
               key={label}
-              style={
-                reduce
-                  ? undefined
-                  : {
-                      x: pillMouseX,
-                      y: pillMouseY,
-                    }
-              }
-              initial={
-                reduce
-                  ? false
-                  : {
-                      opacity: 0,
-                      x: 18,
-                    }
-              }
-              animate={
-                reduce
-                  ? undefined
-                  : {
-                      opacity: 1,
-                      x: 0,
-                    }
-              }
+              style={reduce ? undefined : { x: pillMouseX, y: pillMouseY }}
+              initial={reduce ? false : { opacity: 0, x: 16 }}
+              animate={reduce ? undefined : { opacity: 1, x: 0 }}
               transition={{
-                duration: 0.6,
-                delay: 0.62 + index * 0.09,
+                duration: 0.58,
+                delay: 0.58 + index * 0.09,
                 ease: EASE_PREMIUM,
               }}
-              className="
-                group
-                flex
-                min-w-[180px]
-                items-center
-                gap-3
-                rounded-full
-                border
-                border-[#EDEDED]
-                bg-white/90
-                px-4
-                py-2.5
-                shadow-[0_8px_30px_-20px_rgba(10,10,10,0.35)]
-                backdrop-blur-md
-                transition-all
-                duration-300
-                ease-premium
-                hover:-translate-x-1
-                hover:border-red/40
-                hover:shadow-[0_12px_30px_-18px_rgba(10,10,10,0.25)]
-                lg:min-w-[180px]
-                lg:px-5
-                lg:py-3
-              "
+              className="group flex min-w-[178px] items-center gap-3 rounded-full border border-[#EDEDED] bg-white/90 px-4 py-2.5 shadow-[0_10px_30px_-22px_rgba(10,10,10,0.5)] backdrop-blur-md transition-all duration-300 ease-premium hover:-translate-x-1 hover:border-red/40 lg:min-w-[188px] lg:px-5 lg:py-3"
             >
-              <span
-                className="
-                  flex
-                  h-8
-                  w-8
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-offwhite
-                  text-ink
-                  transition-colors
-                  duration-300
-                  group-hover:bg-red/10
-                  group-hover:text-red
-                "
-              >
-                <Icon
-                  size={15}
-                  strokeWidth={2.1}
-                />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-offwhite text-ink transition-colors duration-300 group-hover:bg-red/10 group-hover:text-red">
+                <Icon size={15} strokeWidth={2.1} />
               </span>
-
-              <span
-                className="
-                  text-[13px]
-                  font-semibold
-                  text-ink
-                "
-              >
+              <span className="text-[13px] font-semibold text-ink">
                 {label}
               </span>
             </motion.div>
           ))}
         </div>
 
-        {/* ----------------------------------------------------
-            MOBILE SERVICE PILLS
-            ---------------------------------------------------- */}
-
-        <div
-          className="
-            absolute
-            bottom-0
-            left-0
-            right-0
-            z-40
-            flex
-            flex-wrap
-            gap-2
-            sm:hidden
-          "
-        >
+        {/* MOBILE SERVICE PILLS */}
+        <div className="absolute bottom-0 left-0 right-0 z-40 flex flex-wrap gap-2 sm:hidden">
           {SERVICE_PILLS.map(({ label, Icon }, index) => (
             <motion.div
               key={label}
-              initial={
-                reduce
-                  ? false
-                  : {
-                      opacity: 0,
-                      y: 12,
-                    }
-              }
-              animate={
-                reduce
-                  ? undefined
-                  : {
-                      opacity: 1,
-                      y: 0,
-                    }
-              }
+              initial={reduce ? false : { opacity: 0, y: 12 }}
+              animate={reduce ? undefined : { opacity: 1, y: 0 }}
               transition={{
-                duration: 0.55,
-                delay: 0.65 + index * 0.08,
+                duration: 0.5,
+                delay: 0.62 + index * 0.07,
                 ease: EASE_PREMIUM,
               }}
-              className="
-                flex
-                items-center
-                gap-2
-                rounded-full
-                border
-                border-[#EDEDED]
-                bg-white/90
-                px-3
-                py-2
-                backdrop-blur-md
-              "
+              className="flex items-center gap-2 rounded-full border border-[#EDEDED] bg-white/90 px-3 py-2 backdrop-blur-md"
             >
-              <span
-                className="
-                  flex
-                  h-7
-                  w-7
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-offwhite
-                  text-ink
-                "
-              >
-                <Icon
-                  size={13}
-                  strokeWidth={2}
-                />
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-offwhite text-ink">
+                <Icon size={13} strokeWidth={2} />
               </span>
-
-              <span
-                className="
-                  text-[11px]
-                  font-semibold
-                  text-ink
-                "
-              >
+              <span className="text-[11px] font-semibold text-ink">
                 {label}
               </span>
             </motion.div>
@@ -683,7 +330,6 @@ function PortfolioHero() {
     </div>
   );
 }
-
 /* ------------------------------------------------------------------ *
  *  PAGE
  * ------------------------------------------------------------------ */
@@ -710,7 +356,7 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
   return (
     <section
       id="portfolio"
-      className="relative overflow-hidden bg-offwhite py-20 md:py-28"
+      className="relative overflow-hidden bg-offwhite pb-16 pt-4 md:pb-24 md:pt-6"
     >
       {/* Soft background decoration */}
       <div className="pointer-events-none absolute left-[-180px] top-[15%] h-[420px] w-[420px] rounded-full bg-red/[0.025] blur-3xl" />
@@ -720,7 +366,7 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
         {/* Back to home — this page is opened in a new tab from the site */}
         <Link
           href="/"
-          className="group mb-12 inline-flex items-center gap-2 text-[13px] font-semibold text-ink/45 transition-colors hover:text-ink"
+          className="hidden"
         >
           <ArrowLeft
             size={15}
