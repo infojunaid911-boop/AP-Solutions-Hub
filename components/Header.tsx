@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, Menu, X } from "lucide-react";
 
@@ -15,6 +16,9 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function Header() {
+  const pathname = usePathname();
+  const home = pathname === "/" ? "" : "/";
+  const to = (hash: string) => `${home}#${hash}`;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState<(typeof NAV_ITEMS)[number]>("Home");
@@ -46,7 +50,7 @@ export default function Header() {
         <div className="mx-auto flex max-w-shell items-center justify-between px-6 py-5 md:px-10">
           {/* Logo */}
 <a
-  href="#home"
+  href={to("home")}
   className="flex items-center"
   onClick={() => setActive("Home")}
 >
@@ -62,7 +66,7 @@ export default function Header() {
             {NAV_ITEMS.map((item) => (
               <a
                 key={item}
-                href={`#${item.toLowerCase()}`}
+                href={to(item.toLowerCase())}
                 onClick={() => setActive(item)}
                 className="group relative py-1 text-[14.5px] font-medium text-ink/70 transition-colors duration-200 hover:text-ink"
               >
@@ -88,7 +92,7 @@ export default function Header() {
               <MessageCircle size={18} strokeWidth={1.8} />
             </a>
             <a
-              href="#contact"
+              href={to("contact")}
               className="hidden items-center rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-red sm:flex"
             >
               Get Started
@@ -138,7 +142,7 @@ export default function Header() {
               {NAV_ITEMS.map((item, i) => (
                 <motion.a
                   key={item}
-                  href={`#${item.toLowerCase()}`}
+                  href={to(item.toLowerCase())}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.06 * i, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
@@ -154,7 +158,7 @@ export default function Header() {
             </nav>
 
             <a
-              href="#contact"
+              href={to("contact")}
               onClick={() => setMenuOpen(false)}
               className="mb-4 flex items-center justify-center rounded-full bg-red py-4 text-base font-semibold text-white"
             >

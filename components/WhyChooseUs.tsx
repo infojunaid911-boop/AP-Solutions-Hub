@@ -1,70 +1,62 @@
 "use client";
 
-import { motion } from "framer-motion";
+import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-
-const ADVANTAGES = [
-  "Premium Quality",
-  "Custom Solutions",
-  "Modern Technology",
-  "Fast Communication",
-  "Business-Focused Strategy",
-  "Mobile-First Design",
-  "Scalable Systems",
-  "Ongoing Support",
-];
+import { StudioVisual } from "@/components/about/visuals";
 
 export default function WhyChooseUs() {
-  return (
-    <section id="why-us" className="bg-ink py-24 md:py-32">
-      <div className="mx-auto max-w-shell px-6 md:px-10">
-        <div className="grid gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-8">
-          {/* Large typography */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-15% 0px" }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:sticky lg:top-32 lg:self-start"
-          >
-            <h2 className="font-display text-4xl font-semibold leading-[1.08] tracking-[-0.01em] text-white sm:text-5xl lg:text-[3.25rem]">
-              Creative enough
-              <br />
-              to stand out.
-              <br />
-              <span className="text-white/40">Smart enough</span>
-              <br />
-              to perform.
-            </h2>
-          </motion.div>
+  const prefersReducedMotion = useReducedMotion();
 
-          {/* Interactive list */}
-          <div className="border-t border-white/10">
-            {ADVANTAGES.map((item, i) => (
-              <motion.div
-                key={item}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-10% 0px" }}
-                transition={{ delay: i * 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="group relative flex items-center justify-between border-b border-white/10 py-6 transition-colors duration-300"
-              >
-                <span className="pointer-events-none absolute inset-y-0 left-0 w-0 bg-red/[0.08] transition-all duration-300 ease-premium group-hover:w-full" />
-                <span className="relative flex items-center gap-5">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red transition-transform duration-300 ease-premium group-hover:scale-150" />
-                  <span className="font-display text-xl font-semibold text-white/70 transition-all duration-300 ease-premium group-hover:translate-x-2 group-hover:text-white sm:text-2xl">
-                    {item}
-                  </span>
-                </span>
-                <ArrowUpRight
-                  size={20}
-                  strokeWidth={1.8}
-                  className="relative shrink-0 text-white/0 transition-all duration-300 ease-premium group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-red"
-                />
-              </motion.div>
-            ))}
-          </div>
-        </div>
+  return (
+    <section
+      id="why-us"
+      className="relative overflow-hidden bg-offwhite py-24 md:py-32"
+    >
+      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-red/[0.06] blur-3xl" />
+
+      <div className="relative mx-auto grid max-w-shell items-center gap-12 px-6 md:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-15% 0px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-red">
+            Why AP Solutions Hub
+          </span>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-[1.06] tracking-[-0.02em] text-ink sm:text-5xl lg:text-[3.35rem]">
+            The studio
+            <span className="block text-ink/35">behind the work.</span>
+          </h2>
+          <p className="mt-6 max-w-md font-body text-base leading-relaxed text-ink/60 sm:text-lg">
+            One team for websites, dashboards, marketing, branding and 3D
+            visualization — design and engineering in the same room.
+          </p>
+
+          <Link
+            href="/about"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 font-display text-sm font-semibold text-white transition-all duration-300 ease-premium hover:bg-red"
+          >
+            Explore More
+            <ArrowUpRight
+              size={16}
+              strokeWidth={2}
+              className="transition-transform duration-300 ease-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-12% 0px" }}
+          transition={{ duration: 0.7, delay: prefersReducedMotion ? 0 : 0.08, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <StudioVisual />
+        </motion.div>
       </div>
     </section>
   );

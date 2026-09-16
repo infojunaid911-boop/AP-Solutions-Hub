@@ -4,7 +4,11 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { WHATSAPP_NUMBER, WHATSAPP_MESSAGE } from "@/lib/whatsapp";
 
-export default function FinalCTA() {
+export default function FinalCTA({
+  contactHref = "#contact",
+}: {
+  contactHref?: string;
+}) {
   return (
     <section className="relative overflow-hidden bg-ink py-24 md:py-32">
       <div className="pointer-events-none absolute inset-0">
@@ -46,7 +50,7 @@ export default function FinalCTA() {
           className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
           <a
-            href="#contact"
+            href={contactHref}
             className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-[14.5px] font-semibold text-ink transition-colors duration-200 hover:bg-red hover:text-white"
           >
             Start Your Project

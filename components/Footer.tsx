@@ -1,4 +1,7 @@
+"use client";
+
 import { Facebook, Instagram, Linkedin, Mail, MessageCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { WHATSAPP_NUMBER, WHATSAPP_MESSAGE } from "@/lib/whatsapp";
 
 const SERVICES = [
@@ -10,14 +13,17 @@ const SERVICES = [
 ];
 
 const COMPANY = [
-  { label: "About", href: "#why-us" },
-  { label: "Portfolio", href: "#portfolio" },
-  { label: "Process", href: "#process" },
-  { label: "Packages", href: "#packages" },
-  { label: "Reviews", href: "#reviews" },
+  { label: "About", hash: "why-us" },
+  { label: "Portfolio", hash: "portfolio" },
+  { label: "Process", hash: "process" },
+  { label: "Packages", hash: "packages" },
+  { label: "Reviews", hash: "reviews" },
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+  const home = pathname === "/" ? "" : "/";
+  const to = (hash: string) => `${home}#${hash}`;
   const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
   return (
@@ -59,7 +65,7 @@ export default function Footer() {
               {SERVICES.map((s) => (
                 <li key={s}>
                   <a
-                    href="#services"
+                    href={to("services")}
                     className="text-[14px] text-white/60 transition-colors duration-200 hover:text-white"
                   >
                     {s}
@@ -78,7 +84,7 @@ export default function Footer() {
               {COMPANY.map((c) => (
                 <li key={c.label}>
                   <a
-                    href={c.href}
+                    href={to(c.hash)}
                     className="text-[14px] text-white/60 transition-colors duration-200 hover:text-white"
                   >
                     {c.label}
