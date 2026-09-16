@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,10 +9,19 @@ import {
   motion,
   useMotionValue,
   useReducedMotion,
+  useScroll,
   useSpring,
   useTransform,
+  type MotionValue,
 } from "framer-motion";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BarChart3,
+  Code2,
+  Cpu,
+  Globe,
+} from "lucide-react";
 import { CATEGORY_TABS } from "@/lib/portfolioData";
 import type { PublicPortfolioItem } from "@/lib/portfolio/getPortfolioItems";
 import PortfolioModal from "./PortfolioModal";
@@ -20,146 +29,657 @@ import PortfolioModal from "./PortfolioModal";
 export type { PublicPortfolioItem };
 
 /* ------------------------------------------------------------------ *
- *  HERO VISUAL — kinetic discipline index.
+ *  PORTFOLIO HERO — "Digital Robot"
  *
- *  Every word here comes from the real category list, so it can never
- *  drift out of sync with the filters. Swap this constant for a custom
- *  array (e.g. ["Web", "UI/UX", "Brand", "3D", "Marketing"]) if you
- *  ever want shorter wording in the hero.
+ *  Giant outline/solid headline + the AP Solutions Hub robot as the
+ *  visual anchor, service pills on the right, collaborate CTA on the
+ *  left. Self-contained: owns its own entrance choreography, cursor
+ *  parallax, and the scroll handoff into the grid below.
  * ------------------------------------------------------------------ */
 
-const DISCIPLINES = CATEGORY_TABS.filter((tab) => tab !== "All Work");
+const EASE_PREMIUM = [0.16, 1, 0.3, 1] as const;
 
-const CYCLE_MS = 2600;
-
-/** Hairline outline for the resting state, solid ink for the active one. */
-const OUTLINE_STYLE = {
+/** Hairline outline treatment for "DIGITAL". */
+const OUTLINE_STYLE: CSSProperties = {
   WebkitTextFillColor: "transparent",
-  WebkitTextStrokeWidth: "1px",
+  WebkitTextStrokeWidth: "1.5px",
   WebkitTextStrokeColor: "currentColor",
-} as const;
+};
 
-const FILLED_STYLE = {
-  WebkitTextStrokeWidth: "1px",
-  WebkitTextStrokeColor: "currentColor",
-} as const;
+const SERVICE_PILLS = [
+  { label: "Websites", Icon: Globe },
+  { label: "Dashboards", Icon: BarChart3 },
+  { label: "Automation", Icon: Code2 },
+  { label: "AI Solutions", Icon: Cpu },
+] as const;
 
-function DisciplineIndex({ projects }: { projects: PublicPortfolioItem[] }) {
+/** Adds two motion values together — used to blend cursor parallax with scroll parallax. */
+function useCombinedMotionValue(a: MotionValue<number>, b: MotionValue<number>) {
+  return useTransform([a, b], (values: number[]) => values[0] + values[1]);
+}
+
+/** One word of the giant headline, masked and revealed on load. */
+function RevealWord({
+  children,
+  delay,
+  reduce,
+  className = "",
+  style,
+}: {
+  children: ReactNode;
+  delay: number;
+  reduce: boolean;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <span className="inline-block overflow-hidden py-1">
+      <motion.span
+        initial={reduce ? false : { y: "115%" }}
+        animate={reduce ? undefined : { y: "0%" }}
+        transition={{ duration: 0.95, delay, ease: EASE_PREMIUM }}
+        className={`inline-block ${className}`}
+        style={style}
+      >
+        {children}
+      </motion.span>
+    </span>
+  );
+}
+
+/** Extremely subtle grid lines behind the hero, fading out toward the grid. */
+function HeroGridLines() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 -z-10 opacity-70 [background-image:linear-gradient(to_right,#EDEDED_1px,transparent_1px),linear-gradient(to_bottom,#EDEDED_1px,transparent_1px)] [background-size:56px_56px] [mask-image:linear-gradient(to_bottom,black,black,transparent)]"
+    />
+  );
+}
+
+function PortfolioHero() {
   const reduce = useReducedMotion() ?? false;
-  const [active, setActive] = useState(0);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Real per-category totals — derived from the projects already passed in.
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-
-    projects.forEach((project) => {
-      map.set(project.category, (map.get(project.category) ?? 0) + 1);
-    });
-
-    return map;
-  }, [projects]);
-
-  useEffect(() => {
-    if (reduce || DISCIPLINES.length === 0) return;
-
-    const id = window.setInterval(() => {
-      setActive((current) => (current + 1) % DISCIPLINES.length);
-    }, CYCLE_MS);
-
-    return () => window.clearInterval(id);
-  }, [reduce]);
-
-  // Whisper-quiet mouse parallax on the whole index.
+  // ------------------------------------------------------------
+  // Cursor parallax
+  // ------------------------------------------------------------
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const px = useSpring(mouseX, { stiffness: 45, damping: 20, mass: 0.8 });
-  const py = useSpring(mouseY, { stiffness: 45, damping: 20, mass: 0.8 });
+  const springX = useSpring(mouseX, {
+    stiffness: 38,
+    damping: 18,
+    mass: 0.7,
+  });
 
-  const stackX = useTransform(px, [-1, 1], [-7, 7]);
-  const stackY = useTransform(py, [-1, 1], [-5, 5]);
+  const springY = useSpring(mouseY, {
+    stiffness: 38,
+    damping: 18,
+    mass: 0.7,
+  });
 
-  const handleMove = (event: ReactMouseEvent<HTMLDivElement>) => {
+  const robotMouseX = useTransform(springX, [-1, 1], [-12, 12]);
+  const robotMouseY = useTransform(springY, [-1, 1], [-8, 8]);
+
+  const typeMouseX = useTransform(springX, [-1, 1], [-3, 3]);
+  const typeMouseY = useTransform(springY, [-1, 1], [-2, 2]);
+
+  const pillMouseX = useTransform(springX, [-1, 1], [-4, 4]);
+  const pillMouseY = useTransform(springY, [-1, 1], [-3, 3]);
+
+  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (reduce) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
-    mouseX.set(((event.clientX - rect.left) / rect.width - 0.5) * 2);
-    mouseY.set(((event.clientY - rect.top) / rect.height - 0.5) * 2);
+
+    mouseX.set(
+      ((event.clientX - rect.left) / rect.width - 0.5) * 2
+    );
+
+    mouseY.set(
+      ((event.clientY - rect.top) / rect.height - 0.5) * 2
+    );
   };
 
-  const handleLeave = () => {
+  const handleMouseLeave = () => {
     mouseX.set(0);
     mouseY.set(0);
   };
 
-  if (DISCIPLINES.length === 0) return null;
+  // ------------------------------------------------------------
+  // Scroll animation
+  // ------------------------------------------------------------
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  const scrollTypeY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [0, reduce ? 0 : -28]
+  );
+
+  const scrollRobotY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [0, reduce ? 0 : -52]
+  );
+
+  const scrollContentY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [0, reduce ? 0 : 18]
+  );
+
+  const scrollContentOpacity = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [1, reduce ? 1 : 0.5]
+  );
+
+  const typeY = useCombinedMotionValue(typeMouseY, scrollTypeY);
+  const robotY = useCombinedMotionValue(robotMouseY, scrollRobotY);
 
   return (
-    <div onMouseMove={handleMove} onMouseLeave={handleLeave} className="w-full">
-      <motion.div style={{ x: stackX, y: stackY }} className="relative">
-        {/* index rule */}
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 block h-full w-px bg-ink/10"
-        />
+    <div
+      ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="
+        relative
+        -mx-5
+        overflow-hidden
+        px-5
+        pt-4
+        sm:-mx-6
+        sm:px-6
+        md:-mx-10
+        md:px-10
+        md:pt-6
+        lg:pt-8
+      "
+    >
+      <HeroGridLines />
 
-        <ul className="flex flex-col gap-1.5 pl-6 sm:gap-2 sm:pl-8">
-          {DISCIPLINES.map((label, index) => {
-            const isActive = index === active;
-            const count = counts.get(label) ?? 0;
+      {/* Accessible real heading */}
+      <h1 className="sr-only">
+        AP Solutions Hub — Portfolio Archive
+      </h1>
 
-            return (
-              <li key={label} className="relative">
-                {/* red marker slides between rows */}
-                <div
-                  aria-hidden
-                  className="absolute -left-6 top-0 flex h-full items-center sm:-left-8"
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="disciplineMarker"
-                      className="block h-5 w-[2px] bg-red sm:h-6"
-                      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                    />
-                  )}
-                </div>
+      {/* ======================================================
+          GIANT PORTFOLIO ARCHIVE HEADING
+          ====================================================== */}
 
-                <motion.div
-                  animate={reduce ? undefined : { x: isActive ? 10 : 0 }}
-                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-baseline gap-4"
-                >
-                  <span className="relative block font-display text-[26px] font-semibold leading-[1.16] tracking-[-0.035em] sm:text-[33px] lg:text-[39px] xl:text-[43px]">
-                    {/* resting: hairline outline */}
-                    <span className="block text-ink/25" style={OUTLINE_STYLE}>
-                      {label}
-                    </span>
+      <motion.div
+        aria-hidden
+        style={
+          reduce
+            ? undefined
+            : {
+                x: typeMouseX,
+                y: typeY,
+              }
+        }
+        className="
+          relative
+          z-10
+          w-full
+          overflow-visible
+        "
+      >
+        <div
+          className="
+            flex
+            w-full
+            items-baseline
+            whitespace-nowrap
+          "
+        >
+          <RevealWord
+            delay={0.05}
+            reduce={reduce}
+            className="
+              font-display
+              text-[clamp(3.6rem,10.4vw,9.8rem)]
+              font-bold
+              leading-[0.82]
+              tracking-[-0.055em]
+              text-ink
+            "
+            style={OUTLINE_STYLE}
+          >
+            PORTFOLIO
+          </RevealWord>
 
-                    {/* active: solid ink, crossfaded on top */}
-                    <motion.span
-                      aria-hidden
-                      className="absolute inset-0 block text-ink"
-                      style={FILLED_STYLE}
-                      animate={{ opacity: isActive ? 1 : 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                    >
-                      {label}
-                    </motion.span>
-                  </span>
-
-                  <span
-                    className={`shrink-0 text-[10px] font-bold uppercase tracking-[0.2em] tabular-nums transition-colors duration-500 ${
-                      isActive ? "text-red" : "text-ink/20"
-                    }`}
-                  >
-                    {String(count).padStart(2, "0")}
-                  </span>
-                </motion.div>
-              </li>
-            );
-          })}
-        </ul>
+          <RevealWord
+            delay={0.3}
+            reduce={reduce}
+            className="
+              ml-[clamp(0.5rem,1.2vw,1.5rem)]
+              font-display
+              text-[clamp(3.6rem,10.4vw,9.8rem)]
+              font-black
+              leading-[0.82]
+              tracking-[-0.065em]
+              text-ink
+            "
+          >
+            ARCHIVE
+          </RevealWord>
+        </div>
       </motion.div>
+
+      {/* ======================================================
+          MAIN HERO STAGE
+          Fixed visual relationship between:
+          LEFT CONTENT / ROBOT / RIGHT PILLS
+          ====================================================== */}
+
+      <div
+        className="
+          relative
+          z-10
+          mt-10
+          min-h-[540px]
+          sm:mt-12
+          sm:min-h-[590px]
+          md:mt-14
+          md:min-h-[620px]
+          lg:mt-8
+          lg:min-h-[540px]
+          xl:min-h-[575px]
+        "
+      >
+        {/* ----------------------------------------------------
+            LEFT CONTENT
+            ---------------------------------------------------- */}
+
+        <motion.div
+          style={
+            reduce
+              ? undefined
+              : {
+                  y: scrollContentY,
+                  opacity: scrollContentOpacity,
+                }
+          }
+          initial={
+            reduce
+              ? false
+              : {
+                  opacity: 0,
+                  y: 22,
+                }
+          }
+          animate={
+            reduce
+              ? undefined
+              : {
+                  opacity: 1,
+                  y: 0,
+                }
+          }
+          transition={{
+            duration: 0.75,
+            delay: 0.48,
+            ease: EASE_PREMIUM,
+          }}
+          className="
+            absolute
+            bottom-4
+            left-0
+            z-30
+            w-full
+            max-w-[440px]
+            lg:bottom-5
+            lg:w-[32%]
+            xl:max-w-[470px]
+          "
+        >
+          <div>
+            <h2
+              className="
+                font-display
+                text-[1.65rem]
+                font-semibold
+                leading-[1.13]
+                tracking-[-0.035em]
+                text-ink
+                sm:text-[1.9rem]
+                md:text-[2.05rem]
+                lg:text-[2rem]
+                xl:text-[2.25rem]
+              "
+            >
+              We build smart digital solutions that work for your business.
+            </h2>
+
+            <p
+              className="
+                mt-4
+                max-w-[36ch]
+                text-[14px]
+                leading-[1.7]
+                text-ink/55
+                sm:text-[15px]
+              "
+            >
+              Custom websites, powerful dashboards, automation and AI tools —
+              all in one place.
+            </p>
+          </div>
+
+          <Link
+            href="/#contact"
+            className="
+              group
+              mt-7
+              inline-flex
+              w-fit
+              items-center
+              gap-2.5
+              rounded-full
+              bg-ink
+              px-6
+              py-3.5
+              text-[13px]
+              font-semibold
+              text-white
+              shadow-[0_14px_30px_-14px_rgba(10,10,10,0.55)]
+              transition-all
+              duration-300
+              ease-premium
+              hover:-translate-y-0.5
+              hover:shadow-[0_20px_40px_-16px_rgba(10,10,10,0.6)]
+            "
+          >
+            Let&apos;s collaborate
+
+            <ArrowUpRight
+              size={15}
+              strokeWidth={2.3}
+              className="
+                transition-transform
+                duration-300
+                group-hover:translate-x-0.5
+                group-hover:-translate-y-0.5
+              "
+            />
+          </Link>
+        </motion.div>
+
+        {/* ----------------------------------------------------
+            ROBOT
+            ---------------------------------------------------- */}
+
+        <motion.div
+          style={
+            reduce
+              ? undefined
+              : {
+                  x: robotMouseX,
+                  y: robotY,
+                }
+          }
+          initial={
+            reduce
+              ? false
+              : {
+                  opacity: 0,
+                  y: 38,
+                  scale: 0.94,
+                }
+          }
+          animate={
+            reduce
+              ? undefined
+              : {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                }
+          }
+          transition={{
+            duration: 1,
+            delay: 0.22,
+            ease: EASE_PREMIUM,
+          }}
+          className="
+            absolute
+            bottom-0
+            left-1/2
+            z-20
+            h-[390px]
+            w-[330px]
+            -translate-x-1/2
+            sm:h-[455px]
+            sm:w-[390px]
+            md:h-[510px]
+            md:w-[450px]
+            lg:h-[500px]
+            lg:w-[470px]
+            xl:h-[545px]
+            xl:w-[510px]
+          "
+        >
+          <Image
+            src="/previews/robothero.png"
+            alt="AP Solutions Hub robot"
+            fill
+            priority
+            sizes="
+              (max-width: 640px) 80vw,
+              (max-width: 768px) 55vw,
+              (max-width: 1024px) 45vw,
+              36vw
+            "
+            className="
+              object-contain
+              object-bottom
+            "
+          />
+        </motion.div>
+
+        {/* ----------------------------------------------------
+            RIGHT SERVICE PILLS
+            IMPORTANT:
+            They are now independently positioned so they
+            NEVER overlap the giant heading.
+            ---------------------------------------------------- */}
+
+        <div
+          className="
+            absolute
+            right-0
+            top-2
+            z-40
+            hidden
+            flex-col
+            items-end
+            gap-3
+            sm:flex
+          "
+        >
+          {SERVICE_PILLS.map(({ label, Icon }, index) => (
+            <motion.div
+              key={label}
+              style={
+                reduce
+                  ? undefined
+                  : {
+                      x: pillMouseX,
+                      y: pillMouseY,
+                    }
+              }
+              initial={
+                reduce
+                  ? false
+                  : {
+                      opacity: 0,
+                      x: 18,
+                    }
+              }
+              animate={
+                reduce
+                  ? undefined
+                  : {
+                      opacity: 1,
+                      x: 0,
+                    }
+              }
+              transition={{
+                duration: 0.6,
+                delay: 0.62 + index * 0.09,
+                ease: EASE_PREMIUM,
+              }}
+              className="
+                group
+                flex
+                min-w-[180px]
+                items-center
+                gap-3
+                rounded-full
+                border
+                border-[#EDEDED]
+                bg-white/90
+                px-4
+                py-2.5
+                shadow-[0_8px_30px_-20px_rgba(10,10,10,0.35)]
+                backdrop-blur-md
+                transition-all
+                duration-300
+                ease-premium
+                hover:-translate-x-1
+                hover:border-red/40
+                hover:shadow-[0_12px_30px_-18px_rgba(10,10,10,0.25)]
+                lg:min-w-[180px]
+                lg:px-5
+                lg:py-3
+              "
+            >
+              <span
+                className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-offwhite
+                  text-ink
+                  transition-colors
+                  duration-300
+                  group-hover:bg-red/10
+                  group-hover:text-red
+                "
+              >
+                <Icon
+                  size={15}
+                  strokeWidth={2.1}
+                />
+              </span>
+
+              <span
+                className="
+                  text-[13px]
+                  font-semibold
+                  text-ink
+                "
+              >
+                {label}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ----------------------------------------------------
+            MOBILE SERVICE PILLS
+            ---------------------------------------------------- */}
+
+        <div
+          className="
+            absolute
+            bottom-0
+            left-0
+            right-0
+            z-40
+            flex
+            flex-wrap
+            gap-2
+            sm:hidden
+          "
+        >
+          {SERVICE_PILLS.map(({ label, Icon }, index) => (
+            <motion.div
+              key={label}
+              initial={
+                reduce
+                  ? false
+                  : {
+                      opacity: 0,
+                      y: 12,
+                    }
+              }
+              animate={
+                reduce
+                  ? undefined
+                  : {
+                      opacity: 1,
+                      y: 0,
+                    }
+              }
+              transition={{
+                duration: 0.55,
+                delay: 0.65 + index * 0.08,
+                ease: EASE_PREMIUM,
+              }}
+              className="
+                flex
+                items-center
+                gap-2
+                rounded-full
+                border
+                border-[#EDEDED]
+                bg-white/90
+                px-3
+                py-2
+                backdrop-blur-md
+              "
+            >
+              <span
+                className="
+                  flex
+                  h-7
+                  w-7
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-offwhite
+                  text-ink
+                "
+              >
+                <Icon
+                  size={13}
+                  strokeWidth={2}
+                />
+              </span>
+
+              <span
+                className="
+                  text-[11px]
+                  font-semibold
+                  text-ink
+                "
+              >
+                {label}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -168,10 +688,11 @@ function DisciplineIndex({ projects }: { projects: PublicPortfolioItem[] }) {
  *  PAGE
  * ------------------------------------------------------------------ */
 
-// The full, dedicated /portfolio archive: every published project, a true
-// Pinterest-style masonry grid (natural image aspect ratios, no cropping),
-// working category filters, and the same project modal used on the
-// homepage preview.
+// The full, dedicated /portfolio archive: the redesigned "Digital Robot"
+// hero above, then every published project in a true Pinterest-style
+// masonry grid (natural image aspect ratios, no cropping), working
+// category filters, and the same project modal used on the homepage
+// preview.
 export default function PortfolioClient({ projects }: { projects: PublicPortfolioItem[] }) {
   const [activeTab, setActiveTab] =
     useState<(typeof CATEGORY_TABS)[number]>("All Work");
@@ -210,38 +731,7 @@ export default function PortfolioClient({ projects }: { projects: PublicPortfoli
         </Link>
 
         {/* ================= HERO ================= */}
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 24 }}
-          animate={reduce ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-10"
-        >
-          {/* LEFT — type */}
-          <div className="lg:col-span-6">
-            <div className="mb-6 flex items-center gap-3">
-              <span className="h-px w-8 bg-red" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.26em] text-red">
-                Our Work
-              </span>
-            </div>
-
-            <h1 className="font-display text-[2.65rem] font-semibold leading-[0.98] tracking-[-0.04em] text-ink sm:text-[3.5rem] lg:text-[4.25rem] xl:text-[4.75rem]">
-              The complete
-              <span className="block text-ink/30">portfolio archive.</span>
-            </h1>
-
-            <p className="mt-8 max-w-[38ch] text-[15px] leading-[1.75] text-ink/55 md:text-base md:leading-[1.8]">
-              Every project we&apos;ve shipped — websites, dashboards,
-              branding, digital marketing and 3D visualization — in one
-              place, filterable by category.
-            </p>
-          </div>
-
-          {/* RIGHT — kinetic discipline index */}
-          <div className="w-full lg:col-span-6 lg:pl-10 xl:pl-20">
-            <DisciplineIndex projects={projects} />
-          </div>
-        </motion.div>
+        <PortfolioHero />
 
         {/* ================= FILTERS ================= */}
         <motion.div
