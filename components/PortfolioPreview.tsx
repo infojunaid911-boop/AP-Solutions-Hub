@@ -1,303 +1,176 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { CATEGORY_TABS } from "@/lib/portfolioData";
 import type { PublicPortfolioItem } from "@/lib/portfolio/getPortfolioItems";
-import PortfolioModal from "./PortfolioModal";
+
+/* ------------------------------------------------------------------ *
+ *  PORTFOLIO PREVIEW — "The Archive, at a glance"
+ *
+ *  A compact, editorial-agency teaser: big centered headline in the
+ *  same two-tone display treatment as AboutHero, a fanned/overlapping
+ *  arrangement of real project covers (rounded, gently rotated,
+ *  raised on hover), a short line of supporting copy, and a "View
+ *  All" CTA. No filters, no modal — every card and the CTA both just
+ *  route to /portfolio, where PortfolioClient owns the real gallery.
+ * ------------------------------------------------------------------ */
+
+const EASE_PREMIUM = [0.16, 1, 0.3, 1] as const;
+
+// Preview shows at most 5 covers — enough to read as a fanned
+// composition without turning the homepage into a second gallery.
+const PREVIEW_COUNT = 5;
 
 export default function PortfolioPreview({
   items,
 }: {
   items: PublicPortfolioItem[];
 }) {
-  const [activeTab, setActiveTab] =
-    useState<(typeof CATEGORY_TABS)[number]>("All Work");
-
-  const [selected, setSelected] = useState<PublicPortfolioItem | null>(null);
-
-  // Show latest 12 projects from the selected category.
-  const filteredItems = useMemo(() => {
-    const filtered =
-      activeTab === "All Work"
-        ? items
-        : items.filter((item) => item.category === activeTab);
-
-    return filtered.slice(0, 12);
-  }, [items, activeTab]);
+  const reduce = useReducedMotion() ?? false;
+  const previewItems = items.slice(0, PREVIEW_COUNT);
+  const total = previewItems.length;
+  const center = (total - 1) / 2;
 
   return (
-    <>
-      {/* ================= FILTERS ================= */}
+    <div className="mt-4">
+      {/* ================= HEADLINE ================= */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="mt-10"
+        initial={reduce ? false : { opacity: 0, y: 18 }}
+        whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.5 }}
+        transition={{ duration: 0.7, ease: EASE_PREMIUM }}
+        className="mx-auto max-w-2xl text-center"
       >
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {CATEGORY_TABS.map((tab) => {
-            const active = activeTab === tab;
-
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`relative shrink-0 overflow-hidden rounded-full border px-5 py-2.5 text-[13px] font-semibold transition-all duration-300 ${
-                  active
-                    ? "border-ink bg-ink text-white shadow-lg shadow-ink/10"
-                    : "border-ink/10 bg-white/70 text-ink/55 hover:border-ink/25 hover:bg-white hover:text-ink"
-                }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+        <div className="mb-2 flex items-center justify-center gap-2">
+          <span className="h-px w-8 bg-red" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-red">
+            WHAT WE'VE BUILT
+          </span>
+          <span className="h-px w-8 bg-red" />
         </div>
+
+        <h2 className="font-display text-[2.4rem] font-semibold leading-[1.05] tracking-[-0.035em] text-ink sm:text-5xl md:text-[3.6rem]">
+          A place we&apos;re proud
+          <span className="block text-ink/35">to put our name on.</span>
+        </h2>
       </motion.div>
 
-      {/* ================= PINTEREST MASONRY GRID ================= */}
-      {filteredItems.length > 0 ? (
-        <motion.div
-          layout
-          className="
-            mt-12
-            columns-2
-            gap-3
-            sm:columns-3
-            md:columns-4
-            md:gap-4
-          "
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredItems.map((item, index) => (
-              <motion.button
-                key={item.id}
-                layout
-                initial={{
-                  opacity: 0,
-                  y: 30,
-                  scale: 0.96,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }}
-                exit={{
-                  opacity: 0,
-                  scale: 0.94,
-                }}
-                transition={{
-                  duration: 0.45,
-                  delay: Math.min(index * 0.035, 0.25),
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                onClick={() => setSelected(item)}
-                className="
-                  group
-                  relative
-                  mb-3
-                  block
-                  w-full
-                  break-inside-avoid
-                  overflow-hidden
-                  rounded-[14px]
-                  bg-mist
-                  text-left
-                  shadow-[0_2px_10px_rgba(0,0,0,0.035)]
-                  transition-all
-                  duration-500
-                  hover:-translate-y-1
-                  hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
-                  md:mb-4
-                  md:rounded-[16px]
-                "
-              >
-                <div className="relative w-full overflow-hidden">
-                  <Image
-                    src={item.coverImage}
-                    alt={item.title}
-                    width={0}
-                    height={0}
-                    loading={index < 6 ? "eager" : "lazy"}
-                    sizes="
-                      (max-width: 640px) 50vw,
-                      (max-width: 1024px) 33vw,
-                      25vw
-                    "
-                    className="
-                      block
-                      h-auto
-                      w-full
-                      transition-transform
-                      duration-700
-                      ease-premium
-                      group-hover:scale-[1.045]
-                    "
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                    }}
-                  />
+      {/* ================= FANNED IMAGE SHOWCASE ================= */}
+      {total > 0 && (
+  <motion.div
+    initial={reduce ? false : { opacity: 0, y: 24 }}
+    whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.2 }}
+    transition={{ duration: 0.7, delay: 0.1, ease: EASE_PREMIUM }}
+    className="relative mt-6 flex items-center justify-center md:mt-8"
+  >
+          <div className="flex items-end justify-center">
+            {previewItems.map((item, index) => {
+              const offset = index - center;
+              const rotate = reduce ? 0 : offset * 6;
+              const lift = Math.abs(offset) * 14;
+              const scale = 1 - Math.abs(offset) * 0.06;
+              const zIndex = 100 - Math.abs(Math.round(offset * 10));
 
-                  {/* HOVER OVERLAY */}
-                  <div
-                    className="
-                      absolute
-                      inset-0
-                      bg-gradient-to-t
-                      from-black/75
-                      via-black/5
-                      to-transparent
-                      opacity-0
-                      transition-opacity
-                      duration-300
-                      group-hover:opacity-100
-                    "
-                  />
+              // On the smallest screens, only the three centre-most
+              // cards show — a real, compact mobile composition
+              // rather than a shrunken desktop one.
+              const mobileVisibility =
+                total >= 5 && Math.abs(offset) > 1
+                  ? "hidden sm:block"
+                  : "";
 
-                  {/* PROJECT INFO */}
-                  <div
-                    className="
-                      absolute
-                      inset-x-0
-                      bottom-0
-                      translate-y-3
-                      p-3
-                      opacity-0
-                      transition-all
-                      duration-300
-                      ease-out
-                      group-hover:translate-y-0
-                      group-hover:opacity-100
-                      md:p-4
-                    "
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={reduce ? false : { opacity: 0, y: 30, scale: 0.9 }}
+                  whileInView={
+                    reduce
+                      ? undefined
+                      : {
+                          opacity: 1,
+                          y: lift,
+                          scale,
+                          rotate,
+                        }
+                  }
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{
+                    duration: 0.65,
+                    delay: 0.15 + index * 0.08,
+                    ease: EASE_PREMIUM,
+                  }}
+                  whileHover={
+                    reduce
+                      ? undefined
+                      : {
+                          y: lift - 14,
+                          scale: scale + 0.06,
+                          rotate: 0,
+                          zIndex: 200,
+                        }
+                  }
+                  style={{ zIndex }}
+                  className={`${mobileVisibility} -ml-6 first:ml-0 sm:-ml-9 md:-ml-12 lg:-ml-14`}
+                >
+                  <Link
+                    href="/portfolio"
+                    aria-label={`View ${item.title} in the full portfolio`}
+                    className="group block"
                   >
-                    <span
-                      className="
-                        text-[8px]
-                        font-bold
-                        uppercase
-                        tracking-[0.18em]
-                        text-white/65
-                        md:text-[9px]
-                      "
-                    >
-                      {item.category}
-                    </span>
+                    <div className="relative h-[168px] w-[128px] overflow-hidden rounded-[16px] bg-mist shadow-[0_18px_40px_-16px_rgba(0,0,0,0.25)] ring-1 ring-black/5 transition-shadow duration-500 ease-premium group-hover:shadow-[0_30px_60px_-18px_rgba(0,0,0,0.35)] sm:h-[210px] sm:w-[160px] sm:rounded-[18px] md:h-[250px] md:w-[190px] lg:h-[275px] lg:w-[210px] lg:rounded-[20px]">
+                      <Image
+                        src={item.coverImage}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 640px) 35vw, (max-width: 1024px) 22vw, 210px"
+                        loading={index < 3 ? "eager" : "lazy"}
+                        className="object-cover transition-transform duration-700 ease-premium group-hover:scale-[1.06]"
+                      />
 
-                    <div className="mt-1.5 flex items-end justify-between gap-2">
-                      <span
-                        className="
-                          font-display
-                          text-[12px]
-                          font-semibold
-                          leading-tight
-                          text-white
-                          md:text-[14px]
-                        "
-                      >
-                        {item.title}
-                      </span>
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-                      <span
-                        className="
-                          flex
-                          h-7
-                          w-7
-                          shrink-0
-                          items-center
-                          justify-center
-                          rounded-full
-                          bg-white
-                          text-ink
-                          transition-transform
-                          duration-300
-                          group-hover:rotate-45
-                          md:h-8
-                          md:w-8
-                        "
-                      >
-                        <ArrowUpRight
-                          size={13}
-                          strokeWidth={2.2}
-                        />
+                      <span className="pointer-events-none absolute bottom-3 right-3 flex h-8 w-8 translate-y-2 items-center justify-center rounded-full bg-white text-ink opacity-0 shadow-md transition-all duration-300 ease-premium group-hover:translate-y-0 group-hover:opacity-100">
+                        <ArrowUpRight size={14} strokeWidth={2.2} />
                       </span>
                     </div>
-                  </div>
-                </div>
-              </motion.button>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="
-            mt-12
-            rounded-[16px]
-            border
-            border-dashed
-            border-ink/10
-            bg-white/50
-            py-16
-            text-center
-          "
-        >
-          <p className="text-sm text-ink/40">
-            No projects found in this category.
-          </p>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
         </motion.div>
       )}
 
-      {/* VIEW ALL */}
-      <div className="mt-14 flex justify-center pb-8 md:mt-16 md:pb-12">
+      {/* ================= SUPPORTING TEXT + CTA ================= */}
+      <motion.div
+  initial={reduce ? false : { opacity: 0, y: 16 }}
+  whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.5 }}
+  transition={{ duration: 0.6, delay: 0.2, ease: EASE_PREMIUM }}
+  className={`mx-auto flex max-w-lg flex-col items-center gap-4 text-center ${
+    total > 0 ? "mt-6 md:mt-8" : "mt-6"
+  }`}
+>
+        <p className="text-[15px] leading-7 text-ink/55 md:text-base">
+          From websites and branding to dashboards and 3D experiences,
+           here's a look at what we've created for our clients.
+          </p>
+
         <Link
           href="/portfolio"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="
-            group
-            inline-flex
-            items-center
-            gap-2
-            rounded-full
-            bg-ink
-            px-7
-            py-3.5
-            text-[13.5px]
-            font-semibold
-            text-white
-            transition-colors
-            duration-200
-            hover:bg-red
-          "
+          className="group inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-red"
         >
-          View All
-
+          View Our Work
           <ArrowUpRight
             size={16}
             strokeWidth={2.2}
-            className="
-              transition-transform
-              duration-300
-              group-hover:translate-x-0.5
-              group-hover:-translate-y-0.5
-            "
+            className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
           />
         </Link>
-      </div>
-
-      {/* MODAL */}
-      <PortfolioModal
-        item={selected}
-        onClose={() => setSelected(null)}
-      />
-    </>
+      </motion.div>
+    </div>
   );
 }

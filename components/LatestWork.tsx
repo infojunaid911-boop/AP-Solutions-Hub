@@ -341,7 +341,7 @@ export default function LatestWork() {
             }}
           >
             <span className="text-[13px] font-semibold tracking-wide text-red">
-              Our Work
+              Our Lastest Work
             </span>
 
             <h2 className="mt-4 font-display text-4xl font-semibold leading-[1.1] tracking-[-0.01em] text-ink sm:text-[2.75rem]">

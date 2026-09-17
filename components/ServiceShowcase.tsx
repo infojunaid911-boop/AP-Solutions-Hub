@@ -163,18 +163,18 @@ export default function ServiceShowcase() {
 
   return (
     <section
-      id="showcase"
-      className="
-        relative
-        overflow-hidden
-        bg-gradient-to-b
-      from-[#EC1D25]
-      via-[#f16066]
-      to-[#fbd1d3]
-        py-20
-        md:py-28
-      "
-    >
+  id="showcase"
+  className="
+    relative
+    overflow-hidden
+    bg-gradient-to-b
+    from-[#7A0C10]
+    via-[#EC1D25]
+    to-[#FF555C]
+    py-20
+    md:py-28
+  "
+>
       {/* ============================================================
           BACKGROUND GLOW
       ============================================================ */}
