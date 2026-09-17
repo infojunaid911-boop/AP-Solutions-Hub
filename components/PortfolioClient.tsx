@@ -5,7 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, X } from "lucide-react";
 import { CATEGORY_TABS } from "@/lib/portfolioData";
-import { MarketingVisual } from "@/components/about/visuals.tsx";
+import { MarketingVisual } from "@/components/about/visuals";
 
 export type PublicPortfolioItem = {
   id: string;
