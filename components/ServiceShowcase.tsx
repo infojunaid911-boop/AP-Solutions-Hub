@@ -25,7 +25,7 @@ const SLIDES: Slide[] = [
     title: "Website Development",
     description:
       "Realistic, modern website previews built for speed and clarity.",
-    kind: "website",
+    kind: "Website",
     image: "/previews/Websites.jpeg",
   },
   {
@@ -33,7 +33,7 @@ const SLIDES: Slide[] = [
     title: "Business Dashboards",
     description:
       "Analytics and data visualization interfaces that make numbers easy to read.",
-    kind: "dashboard",
+    kind: "Dashboard",
     image: "/previews/Dashboards.jpeg",
   },
   {
@@ -41,7 +41,7 @@ const SLIDES: Slide[] = [
     title: "Digital Marketing",
     description:
       "Campaign visuals and social media creative built to convert.",
-    kind: "marketing",
+    kind: "Digital Marketing",
     image: "/previews/Marketing.jpeg",
   },
   {
@@ -49,7 +49,7 @@ const SLIDES: Slide[] = [
     title: "3D Architecture",
     description:
       "Architectural renders that bring a concept to life before it's built.",
-    kind: "architecture",
+    kind: "3D Architecture",
     image: "/previews/Architecture.jpeg",
   },
   {
@@ -57,7 +57,7 @@ const SLIDES: Slide[] = [
     title: "Graphic Design",
     description:
       "Branding systems, colour and type that give a business a real identity.",
-    kind: "branding",
+    kind: "E-Commerce",
     image: "/previews/Portfolio.jpeg",
   },
 ];
@@ -328,10 +328,10 @@ export default function ServiceShowcase() {
                   : slide.title === "Business Dashboards"
                     ? "Dashboards"
                     : slide.title === "Digital Marketing"
-                      ? "Marketing"
+                      ? "Digital Marketing"
                       : slide.title === "3D Architecture"
-                        ? "Architecture"
-                        : "Portfolios"}
+                        ? "3D Architecture"
+                        : "E-Commerce"}
               </button>
             ))}
           </div>
