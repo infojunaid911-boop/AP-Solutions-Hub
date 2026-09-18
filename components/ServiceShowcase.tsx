@@ -25,7 +25,7 @@ const SLIDES: Slide[] = [
     title: "Website Development",
     description:
       "Realistic, modern website previews built for speed and clarity.",
-    kind: "Website",
+    kind: "website",
     image: "/previews/Websites.jpeg",
   },
   {
@@ -33,7 +33,7 @@ const SLIDES: Slide[] = [
     title: "Business Dashboards",
     description:
       "Analytics and data visualization interfaces that make numbers easy to read.",
-    kind: "Dashboard",
+    kind: "dashboard",
     image: "/previews/Dashboards.jpeg",
   },
   {
@@ -41,12 +41,12 @@ const SLIDES: Slide[] = [
     title: "Digital Marketing",
     description:
       "Campaign visuals and social media creative built to convert.",
-    kind: "Digital Marketing",
+    kind: "marketing",
     image: "/previews/Marketing.jpeg",
   },
   {
     number: "04",
-    title: "3D Architecture",
+    title: "architecture",
     description:
       "Architectural renders that bring a concept to life before it's built.",
     kind: "3D Architecture",
@@ -57,7 +57,7 @@ const SLIDES: Slide[] = [
     title: "Graphic Design",
     description:
       "Branding systems, colour and type that give a business a real identity.",
-    kind: "E-Commerce",
+    kind: "branding",
     image: "/previews/Portfolio.jpeg",
   },
 ];
