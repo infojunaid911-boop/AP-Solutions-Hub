@@ -293,7 +293,7 @@ export function MarketingVisual() {
       y: "18%",
       rot: -16,
       z: 25,
-      image: "/previews/food.jfif",
+      image: "/previews/food.jpg",
       alt: "Architecture project preview",
     },
     {
@@ -301,7 +301,7 @@ export function MarketingVisual() {
       y: "7%",
       rot: 8,
       z: 65,
-      image: "/previews/restaurants.jfif",
+      image: "/previews/restaurants.jpg",
       alt: "Portfolio project preview",
     },
     {
