@@ -116,10 +116,12 @@ export default function PortfolioPreview({
                   className={`${mobileVisibility} -ml-6 first:ml-0 sm:-ml-9 md:-ml-12 lg:-ml-14`}
                 >
                   <Link
-                    href="/portfolio"
-                    aria-label={`View ${item.title} in the full portfolio`}
-                    className="group block"
-                  >
+  href="/portfolio"
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label={`View ${item.title} in the full portfolio`}
+  className="group block"
+>
                     <div className="relative h-[168px] w-[128px] overflow-hidden rounded-[16px] bg-mist shadow-[0_18px_40px_-16px_rgba(0,0,0,0.25)] ring-1 ring-black/5 transition-shadow duration-500 ease-premium group-hover:shadow-[0_30px_60px_-18px_rgba(0,0,0,0.35)] sm:h-[210px] sm:w-[160px] sm:rounded-[18px] md:h-[250px] md:w-[190px] lg:h-[275px] lg:w-[210px] lg:rounded-[20px]">
                       <Image
                         src={item.coverImage}
@@ -160,9 +162,11 @@ export default function PortfolioPreview({
           </p>
 
         <Link
-          href="/portfolio"
-          className="group inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-red"
-        >
+  href="/portfolio"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="group inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-red"
+>
           View Our Work
           <ArrowUpRight
             size={16}
