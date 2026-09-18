@@ -196,7 +196,15 @@ export default function ServiceShowcase() {
       </div>
 
       <div className="relative mx-auto max-w-[1920px] px-5 sm:px-8 lg:px-12">
+        {/* ============================================================
+    SECTION TITLE
+============================================================ */}
 
+<div className="mb-8 text-center md:mb-10">
+  <h2 className="font-display text-xl font-semibold tracking-tight text-white md:text-2xl">
+    Our Services
+  </h2>
+</div>
         {/* ============================================================
             CAROUSEL
         ============================================================ */}

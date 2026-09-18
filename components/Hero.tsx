@@ -22,7 +22,7 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative overflow-hidden bg-offwhite pb-24 pt-36 md:pb-32 md:pt-44"
+      className="relative overflow-hidden bg-offwhite pb-24 pt-22 md:pb-32 md:pt-28"
     >
       <div className="mx-auto grid max-w-shell items-center gap-16 px-6 md:px-10 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
 
