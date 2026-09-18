@@ -49,7 +49,7 @@ const SLIDES: Slide[] = [
     title: "architecture",
     description:
       "Architectural renders that bring a concept to life before it's built.",
-    kind: "3D Architecture",
+    kind: "architecture",
     image: "/previews/Architecture.jpeg",
   },
   {
