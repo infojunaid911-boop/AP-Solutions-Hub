@@ -1,85 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionValue,
   animate as fmAnimate,
   type PanInfo,
 } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-  LayoutDashboard,
-  Boxes,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ImageOff } from "lucide-react";
+import type { PublicPortfolioItem } from "@/lib/portfolio/getPortfolioItems";
 
+// Same shape as the existing /portfolio data (PublicPortfolioItem), just
+// renamed locally to what the carousel/card code already expects.
 type Project = {
+  id: string;
   category: string;
   name: string;
   description: string;
-  tone: "ink" | "offwhite" | "red" | "white";
+  image: string | null;
 };
 
-const PROJECTS: Project[] = [
-  {
-    category: "Website Design",
-    name: "Restaurant Website",
-    description:
-      "A warm, appetite-driving site for a family restaurant group.",
-    tone: "offwhite",
-  },
-  {
-    category: "Dashboards",
-    name: "Business Analytics Dashboard",
-    description:
-      "Real-time reporting built for a fast-moving operations team.",
-    tone: "ink",
-  },
-  {
-    category: "Website Design",
-    name: "Construction Company Website",
-    description:
-      "A confident, project-led site for a regional construction firm.",
-    tone: "white",
-  },
-  {
-    category: "E-commerce",
-    name: "E-commerce Store",
-    description:
-      "A conversion-focused storefront for a growing retail brand.",
-    tone: "offwhite",
-  },
-  {
-    category: "Digital Marketing",
-    name: "Social Media Campaign",
-    description:
-      "A coordinated campaign that lifted engagement across channels.",
-    tone: "red",
-  },
-  {
-    category: "Branding",
-    name: "Brand Identity",
-    description:
-      "A full identity system — mark, colour, type — for a new venture.",
-    tone: "white",
-  },
-  {
-    category: "3D Architecture",
-    name: "3D Architectural Visualization",
-    description:
-      "Photoreal renders used to pre-sell units before groundbreak.",
-    tone: "ink",
-  },
-  {
-    category: "Dashboards",
-    name: "Corporate Dashboard",
-    description:
-      "An internal reporting suite unifying data across departments.",
-    tone: "offwhite",
-  },
-];
+function toProject(item: PublicPortfolioItem): Project {
+  return {
+    id: item.id,
+    category: item.category || "Project",
+    name: item.title || "Untitled project",
+    description: item.description || "",
+    image: item.coverImage || null,
+  };
+}
 
 const CLONE = 3;
 const GAP = 24;
@@ -94,14 +44,31 @@ const TRANSITION = {
   ease: [0.16, 1, 0.3, 1] as const,
 };
 
-const extended = [
-  ...PROJECTS.slice(-CLONE),
-  ...PROJECTS,
-  ...PROJECTS.slice(0, CLONE),
-];
+export default function LatestWork({
+  items,
+}: {
+  // Same Supabase-backed data /portfolio uses (getPublishedPortfolioItems).
+  items: PublicPortfolioItem[];
+}) {
+  // Map once into the shape the existing carousel markup already expects —
+  // no change to the slider mechanics below, just a real data source.
+  const PROJECTS = useMemo(() => items.map(toProject), [items]);
 
-export default function LatestWork() {
-  const [index, setIndex] = useState(CLONE);
+  // The infinite-loop clone trick needs at least `CLONE` real items to
+  // clone from. With fewer projects than that (including zero), clamp so
+  // the slice() calls below can't duplicate/overlap in a broken way.
+  const cloneCount = Math.min(CLONE, PROJECTS.length);
+
+  const extended = useMemo(() => {
+    if (PROJECTS.length === 0) return [];
+    return [
+      ...PROJECTS.slice(-cloneCount),
+      ...PROJECTS,
+      ...PROJECTS.slice(0, cloneCount),
+    ];
+  }, [PROJECTS, cloneCount]);
+
+  const [index, setIndex] = useState(cloneCount);
   const [paused, setPaused] = useState(false);
   const [dragging, setDragging] = useState(false);
 
@@ -142,8 +109,8 @@ export default function LatestWork() {
   useEffect(() => {
     if (!itemWidth) return;
 
-    x.set(-CLONE * (itemWidth + GAP));
-  }, [itemWidth, x]);
+    x.set(-cloneCount * (itemWidth + GAP));
+  }, [itemWidth, x, cloneCount]);
 
   /*
    * ---------------------------------------------------------
@@ -155,9 +122,9 @@ export default function LatestWork() {
    * ---------------------------------------------------------
    */
   useEffect(() => {
-    if (!itemWidth) return;
+    if (!itemWidth || PROJECTS.length === 0) return;
 
-    let animationFrame: number;
+    let animationFrame = 0;
     let lastTime = performance.now();
 
     const step = (currentTime: number) => {
@@ -179,7 +146,7 @@ export default function LatestWork() {
          * instantly move back to the original set.
          */
         const endPosition =
-          -(CLONE + PROJECTS.length) * totalStep;
+          -(cloneCount + PROJECTS.length) * totalStep;
 
         if (nextX <= endPosition) {
           nextX += PROJECTS.length * totalStep;
@@ -196,7 +163,7 @@ export default function LatestWork() {
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [itemWidth, paused, dragging, x]);
+  }, [itemWidth, paused, dragging, x, cloneCount, PROJECTS.length]);
 
   /*
    * ---------------------------------------------------------
@@ -204,7 +171,7 @@ export default function LatestWork() {
    * ---------------------------------------------------------
    */
   useEffect(() => {
-    if (!itemWidth) return;
+    if (!itemWidth || PROJECTS.length === 0) return;
 
     const unsubscribe = x.on("change", (latestX) => {
       const step = itemWidth + GAP;
@@ -212,14 +179,14 @@ export default function LatestWork() {
       const rawIndex = Math.round(Math.abs(latestX) / step);
 
       const realIndex =
-        ((rawIndex - CLONE) % PROJECTS.length + PROJECTS.length) %
+        ((rawIndex - cloneCount) % PROJECTS.length + PROJECTS.length) %
         PROJECTS.length;
 
-      setIndex(CLONE + realIndex);
+      setIndex(cloneCount + realIndex);
     });
 
     return unsubscribe;
-  }, [x, itemWidth]);
+  }, [x, itemWidth, cloneCount, PROJECTS.length]);
 
   /*
    * ---------------------------------------------------------
@@ -261,7 +228,7 @@ export default function LatestWork() {
     await snapTo(nextIndex);
 
     // Infinite carousel correction
-    if (nextIndex < CLONE) {
+    if (nextIndex < cloneCount) {
       const corrected = nextIndex + PROJECTS.length;
 
       x.set(-corrected * (itemWidth + GAP));
@@ -282,7 +249,7 @@ export default function LatestWork() {
     await snapTo(nextIndex);
 
     // Infinite carousel correction
-    if (nextIndex >= CLONE + PROJECTS.length) {
+    if (nextIndex >= cloneCount + PROJECTS.length) {
       const corrected = nextIndex - PROJECTS.length;
 
       x.set(-corrected * (itemWidth + GAP));
@@ -318,8 +285,10 @@ export default function LatestWork() {
   };
 
   const activeReal =
-    ((index - CLONE) % PROJECTS.length + PROJECTS.length) %
-    PROJECTS.length;
+    PROJECTS.length === 0
+      ? 0
+      : ((index - cloneCount) % PROJECTS.length + PROJECTS.length) %
+        PROJECTS.length;
 
   return (
     <section
@@ -370,77 +339,88 @@ export default function LatestWork() {
 
       {/* =====================================================
           CAROUSEL
+          (Nothing published yet — keep the header above but skip an
+          empty/broken-looking carousel rather than rendering nothing at
+          all or crashing on the divide-by-zero below.)
           ===================================================== */}
-      <div
-        className="mt-14 pl-6 md:pl-10"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
-        <motion.div
-          className="flex cursor-grab active:cursor-grabbing"
-          style={{
-            x,
-            gap: GAP,
-          }}
-          drag="x"
-          dragElastic={0.08}
-          dragMomentum={false}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          {extended.map((project, i) => (
-            <div
-              key={i}
-              ref={i === 0 ? itemRef : undefined}
-              className="w-[86%] shrink-0 sm:w-[70%] md:w-[47%] lg:w-[31.5%]"
+      {PROJECTS.length === 0 ? (
+        <p className="mx-auto mt-14 max-w-shell px-6 text-[14px] text-ink/45 md:px-10">
+          New work is on the way — check back soon.
+        </p>
+      ) : (
+        <>
+          <div
+            className="mt-14 pl-6 md:pl-10"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+          >
+            <motion.div
+              className="flex cursor-grab active:cursor-grabbing"
+              style={{
+                x,
+                gap: GAP,
+              }}
+              drag="x"
+              dragElastic={0.08}
+              dragMomentum={false}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
             >
-              <ProjectCard project={project} />
+              {extended.map((project, i) => (
+                <div
+                  key={`${project.id}-${i}`}
+                  ref={i === 0 ? itemRef : undefined}
+                  className="w-[86%] shrink-0 sm:w-[70%] md:w-[47%] lg:w-[31.5%]"
+                >
+                  <ProjectCard project={project} />
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* =====================================================
+              CONTROLS
+              ===================================================== */}
+          <div className="mx-auto mt-10 flex max-w-shell items-center justify-between px-6 md:px-10">
+            <div className="h-[3px] w-40 overflow-hidden rounded-full bg-mist sm:w-56">
+              <motion.div
+                className="h-full rounded-full bg-red"
+                animate={{
+                  width: `${((activeReal + 1) / PROJECTS.length) * 100}%`,
+                }}
+                transition={{
+                  duration: 0.4,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              />
             </div>
-          ))}
-        </motion.div>
-      </div>
 
-      {/* =====================================================
-          CONTROLS
-          ===================================================== */}
-      <div className="mx-auto mt-10 flex max-w-shell items-center justify-between px-6 md:px-10">
-        <div className="h-[3px] w-40 overflow-hidden rounded-full bg-mist sm:w-56">
-          <motion.div
-            className="h-full rounded-full bg-red"
-            animate={{
-              width: `${((activeReal + 1) / PROJECTS.length) * 100}%`,
-            }}
-            transition={{
-              duration: 0.4,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-          />
-        </div>
+            <div className="flex items-center gap-3">
+              <button
+                aria-label="Previous project"
+                onClick={prev}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/12 text-ink transition-colors duration-200 hover:border-red hover:text-red"
+              >
+                <ArrowLeft
+                  size={17}
+                  strokeWidth={1.8}
+                />
+              </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            aria-label="Previous project"
-            onClick={prev}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/12 text-ink transition-colors duration-200 hover:border-red hover:text-red"
-          >
-            <ArrowLeft
-              size={17}
-              strokeWidth={1.8}
-            />
-          </button>
-
-          <button
-            aria-label="Next project"
-            onClick={next}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/12 text-ink transition-colors duration-200 hover:border-red hover:text-red"
-          >
-            <ArrowRight
-              size={17}
-              strokeWidth={1.8}
-            />
-          </button>
-        </div>
-      </div>
+              <button
+                aria-label="Next project"
+                onClick={next}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/12 text-ink transition-colors duration-200 hover:border-red hover:text-red"
+              >
+                <ArrowRight
+                  size={17}
+                  strokeWidth={1.8}
+                />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -455,21 +435,32 @@ function ProjectCard({
 }: {
   project: Project;
 }) {
-  const toneClasses: Record<Project["tone"], string> = {
-    ink: "bg-ink",
-    offwhite: "bg-offwhite",
-    red: "bg-red",
-    white: "bg-white border border-ink/10",
-  };
-
   return (
     <article className="group select-none">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-        <div
-          className={`absolute inset-0 flex items-center justify-center transition-transform duration-500 ease-premium group-hover:scale-[1.06] ${toneClasses[project.tone]}`}
-        >
-          <ProjectMark project={project} />
-        </div>
+      {/* Same box (aspect-[4/3], rounded-2xl) as before — only the
+          content inside it changed, from a decorative tone/icon block
+          to the real portfolio image (or a clean fallback). */}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-mist">
+        {project.image ? (
+          <Image
+            src={project.image}
+            alt={project.name}
+            fill
+            sizes="(max-width: 640px) 86vw, (max-width: 768px) 70vw, (max-width: 1024px) 47vw, 31.5vw"
+            // contain (never cover): the whole image stays visible,
+            // uncropped, with the bg-mist box showing through as the
+            // border around it for any image that isn't itself 4:3.
+            className="object-contain transition-transform duration-500 ease-premium group-hover:scale-[1.06]"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ImageOff
+              size={28}
+              strokeWidth={1.6}
+              className="text-ink/25"
+            />
+          </div>
+        )}
 
         {/* Hover overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-ink/0 opacity-0 transition-all duration-300 ease-premium group-hover:bg-ink/45 group-hover:opacity-100">
@@ -494,160 +485,14 @@ function ProjectCard({
           {project.name}
         </h3>
 
-        <p className="mt-1.5 max-w-[38ch] text-[14px] leading-relaxed text-ink/55">
-          {project.description}
-        </p>
-      </div>
-    </article>
-  );
-}
-
-/*
- * ===========================================================
- * PROJECT MARK
- * ===========================================================
- */
-function ProjectMark({
-  project,
-}: {
-  project: Project;
-}) {
-  const isDark =
-    project.tone === "ink" ||
-    project.tone === "red";
-
-  const dot = isDark
-    ? "bg-white/25"
-    : "bg-ink/15";
-
-  const strong = isDark
-    ? "bg-white/70"
-    : "bg-ink/60";
-
-  if (project.category === "Dashboards") {
-    return (
-      <div className="flex w-2/3 flex-col gap-2">
-        <LayoutDashboard
-          size={20}
-          className={
-            isDark
-              ? "text-white/70"
-              : "text-ink/50"
-          }
-          strokeWidth={1.6}
-        />
-
-        <div className="flex items-end gap-1">
-          {[40, 70, 50, 90, 60].map(
-            (h, i) => (
-              <span
-                key={i}
-                className={`w-3 rounded-sm ${
-                  i === 3
-                    ? "bg-red"
-                    : dot
-                }`}
-                style={{
-                  height: h / 2.2,
-                }}
-              />
-            )
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (project.category === "3D Architecture") {
-    return (
-      <svg
-        width="46%"
-        height="46%"
-        viewBox="0 0 100 80"
-        fill="none"
-      >
-        <path
-          d="M18 68 V32 L50 12 L82 32 V68"
-          stroke="white"
-          strokeOpacity="0.35"
-          strokeWidth="1.4"
-        />
-
-        <path
-          d="M50 12 V68"
-          stroke="#EC1D25"
-          strokeWidth="1.4"
-        />
-      </svg>
-    );
-  }
-
-  if (project.category === "Digital Marketing") {
-    return (
-      <div className="grid w-1/2 grid-cols-3 gap-1.5">
-        {Array.from({ length: 6 }).map(
-          (_, i) => (
-            <span
-              key={i}
-              className="aspect-square rounded-sm bg-white/25"
-            />
-          )
+        {project.description && (
+          // line-clamp-2 keeps card height consistent when a project's
+          // description is much longer/shorter than the others.
+          <p className="mt-1.5 line-clamp-2 max-w-[38ch] text-[14px] leading-relaxed text-ink/55">
+            {project.description}
+          </p>
         )}
       </div>
-    );
-  }
-
-  if (project.category === "Branding") {
-    return (
-      <div className="flex items-center gap-2">
-        <span
-          className={`h-9 w-9 rounded-full ${strong}`}
-        />
-
-        <span
-          className={`h-9 w-9 rounded-full ${dot}`}
-        />
-
-        <span className="h-9 w-9 rounded-full bg-red" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-2/3">
-      <div className="flex items-center gap-1.5">
-        <span
-          className={`h-2 w-2 rounded-full ${dot}`}
-        />
-        <span
-          className={`h-2 w-2 rounded-full ${dot}`}
-        />
-        <span
-          className={`h-2 w-2 rounded-full ${dot}`}
-        />
-      </div>
-
-      <div
-        className={`mt-3 h-2.5 w-4/5 rounded ${strong}`}
-      />
-
-      <div
-        className={`mt-2 h-2 w-full rounded ${dot}`}
-      />
-
-      <div
-        className={`mt-1.5 h-2 w-2/3 rounded ${dot}`}
-      />
-
-      <Boxes
-        size={16}
-        className={`mt-3 ${
-          isDark
-            ? "text-white/40"
-            : "text-ink/30"
-        }`}
-        strokeWidth={1.6}
-      />
-    </div>
+    </article>
   );
 }

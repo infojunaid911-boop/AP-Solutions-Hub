@@ -12,14 +12,19 @@ import FAQ from "@/components/FAQ";
 import Contact from "@/components/Contact";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
+import { getPublishedPortfolioItems } from "@/lib/portfolio/getPortfolioItems";
 
-export default function Home() {
+export default async function Home() {
+  // Same Supabase-backed source /portfolio uses — bounded here (unlike the
+  // full archive page) since this is just the homepage carousel.
+  const latestWorkItems = await getPublishedPortfolioItems(12);
+
   return (
     <main>
       <Header />
       <Hero />
       <ServiceShowcase />
-      <LatestWork />
+      <LatestWork items={latestWorkItems} />
       <Portfolio />
       <Process />
       <WhyChooseUs />
