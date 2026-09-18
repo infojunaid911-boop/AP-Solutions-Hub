@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import StatCounter from "./StatCounter";
 
-const TAGS = ["Websites", "Dashboards", "Marketing", "Design", "3D Architecture"];
+const TAGS = ["Websites", "Dashboards", "Digital Marketing", "Graphic & UI/UX Design", "3D Architecture", "Software Development", "E-commerce Solutions"];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -46,7 +46,7 @@ export default function Hero() {
             className="mt-7 max-w-[46ch] text-[16.5px] leading-relaxed text-ink/65 md:text-[17.5px]"
           >
             From websites and business dashboards to digital marketing,
-            creative design and 3D visualization — we build everything your
+            creative design and 3D visualization. we build everything your
             business needs to stand out and grow.
           </motion.p>
 
@@ -73,25 +73,44 @@ export default function Hero() {
           </motion.div>
 
           <motion.div
-            custom={3}
-            initial="hidden"
-            animate="show"
-            variants={fadeUp}
-            className="mt-9 flex flex-wrap items-center gap-x-4 gap-y-2"
-          >
-            {TAGS.map((tag, i) => (
-              <span
-                key={tag}
-                className="flex items-center text-[13.5px] font-medium text-ink/50"
-              >
-                {tag}
+  custom={3}
+  initial="hidden"
+  animate="show"
+  variants={fadeUp}
+  className="mt-9 text-center"
+>
+  {/* First Line */}
+  <div className="flex items-center justify-center gap-4">
+    {TAGS.slice(0, 4).map((tag, i) => (
+      <span
+        key={tag}
+        className="flex items-center text-[13.5px] font-medium text-ink/50"
+      >
+        {tag}
 
-                {i < TAGS.length - 1 && (
-                  <span className="ml-4 h-1 w-1 rounded-full bg-ink/25" />
-                )}
-              </span>
-            ))}
-          </motion.div>
+        {i < 3 && (
+          <span className="ml-4 h-1 w-1 rounded-full bg-ink/25" />
+        )}
+      </span>
+    ))}
+  </div>
+
+  {/* Second Line */}
+  <div className="mt-2 flex items-center justify-center gap-4">
+    {TAGS.slice(4).map((tag, i) => (
+      <span
+        key={tag}
+        className="flex items-center text-[13.5px] font-medium text-ink/50"
+      >
+        {tag}
+
+        {i < 2 && (
+          <span className="ml-4 h-1 w-1 rounded-full bg-ink/25" />
+        )}
+      </span>
+    ))}
+  </div>
+</motion.div>
 
           {/* Stats */}
           <motion.div
@@ -102,19 +121,19 @@ export default function Hero() {
             className="mt-14 grid max-w-md grid-cols-3 gap-6 border-t border-ink/10 pt-8"
           >
             <StatCounter
-              value={100}
+              value={125}
               suffix="+"
               label="Projects Completed"
             />
 
             <StatCounter
-              value={20}
+              value={37}
               suffix="+"
               label="Happy Clients"
             />
 
             <StatCounter
-              value={6}
+              value={16}
               suffix="+"
               label="Digital Services"
             />
