@@ -323,15 +323,17 @@ export default function ServiceShowcase() {
                   }
                 `}
               >
-                {slide.title === "Website Development"
-                  ? "Websites"
-                  : slide.title === "Business Dashboards"
-                    ? "Dashboards"
-                    : slide.title === "Digital Marketing"
-                      ? "Digital Marketing"
-                      : slide.title === "3D Architecture"
-                        ? "3D Architecture"
-                        : "E-Commerce"}
+                {slide.title === "Web Development"
+  ? "Websites"
+  : slide.title === "Dashboard Development"
+  ? "Dashboards"
+  : slide.title === "Digital Marketing"
+  ? "Digital Marketing"
+  : slide.title === "architecture"
+  ? "3D Architecture"
+  : slide.title === "Graphic Design"
+  ? "E-Commerce"
+  : slide.title}
               </button>
             ))}
           </div>
