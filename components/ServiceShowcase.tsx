@@ -167,10 +167,10 @@ export default function ServiceShowcase() {
   className="
     relative
     overflow-hidden
-    bg-gradient-to-b
-    from-[#7A0C10]
+    bg-gradient-to-br
+    from-[#8F0B10]
     via-[#EC1D25]
-    to-[#FF555C]
+    to-[#65070B]
     py-20
     md:py-28
   "
@@ -179,21 +179,11 @@ export default function ServiceShowcase() {
           BACKGROUND GLOW
       ============================================================ */}
 
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="
-            absolute
-            left-1/2
-            top-[-180px]
-            h-[450px]
-            w-[850px]
-            -translate-x-1/2
-            rounded-full
-            bg-white/20
-            blur-3xl
-          "
-        />
-      </div>
+      <div className="pointer-events-none absolute -left-32 top-10 h-72 w-72 rounded-full bg-white/[0.08] blur-3xl" />
+
+<div className="pointer-events-none absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-white/[0.06] blur-3xl" />
+
+<div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF5A60]/[0.10] blur-3xl" />
 
       <div className="relative mx-auto max-w-[1920px] px-5 sm:px-8 lg:px-12">
         {/* ============================================================
