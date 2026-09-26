@@ -59,35 +59,19 @@ export function StudioVisual() {
           }}
         />
 
+        {/* White screen — only this part changed */}
         <div
           className="absolute inset-[14%] overflow-hidden rounded-[20px] border border-ink/10 bg-offwhite shadow-[0_30px_60px_rgba(10,10,10,0.18)]"
           style={{ transform: "translateZ(70px)" }}
         >
-          <div className="flex h-8 items-center gap-1.5 border-b border-ink/10 px-3">
-            <span className="h-1.5 w-1.5 rounded-full bg-ink/20" />
-            <span className="h-1.5 w-1.5 rounded-full bg-ink/20" />
-            <span className="h-1.5 w-1.5 rounded-full bg-red" />
-          </div>
-
-          <div className="grid h-[calc(100%-2rem)] grid-cols-3 gap-2 p-3">
-            <div className="col-span-2 space-y-2">
-              <div className="h-2.5 w-4/5 rounded bg-ink/10" />
-              <div className="h-2 w-full rounded bg-ink/[0.06]" />
-              <div className="h-2 w-3/4 rounded bg-ink/[0.06]" />
-              <div className="mt-3 h-7 w-20 rounded-full bg-red" />
-            </div>
-
-            <div className="rounded-lg bg-mist" />
-          </div>
+          <img
+            src="/previews/herowebsites.jpg"
+            alt="Studio preview"
+            className="h-full w-full object-cover"
+          />
         </div>
 
-        <div
-          className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red font-display text-sm font-bold text-white shadow-[0_12px_30px_rgba(236,29,37,0.4)]"
-          style={{ transform: "translateZ(110px)" }}
-        >
-          AP
         </div>
-      </div>
     </Stage>
   );
 }
@@ -201,26 +185,11 @@ export function WebsiteVisual() {
               transform: `translateZ(${i * 46}px) translateX(${i * 16}px) translateY(${i * -8}px)`,
             }}
           >
-            <div className="flex h-7 items-center gap-1.5 border-b border-ink/8 bg-offwhite px-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-ink/15" />
-              <span className="h-1.5 w-1.5 rounded-full bg-ink/15" />
-              <span className="h-1.5 w-1.5 rounded-full bg-ink/15" />
-              <span className="ml-2 h-2.5 flex-1 rounded-full bg-ink/[0.06]" />
-            </div>
-
-            <div className="grid h-[calc(100%-1.75rem)] grid-cols-5 gap-2 p-3">
-              <div className="col-span-3 space-y-2">
-                <div className="h-3 w-4/5 rounded bg-ink/10" />
-                <div className="h-2 w-full rounded bg-ink/[0.05]" />
-                <div className="h-2 w-2/3 rounded bg-ink/[0.05]" />
-
-                {i === 2 && (
-                  <div className="mt-3 h-7 w-24 rounded-full bg-red" />
-                )}
-              </div>
-
-              <div className="col-span-2 rounded-lg bg-mist" />
-            </div>
+            <img
+              src="/previews/about-website.jpg"
+              alt="Website preview"
+              className="h-full w-full object-cover"
+            />
           </div>
         ))}
       </div>
@@ -229,54 +198,21 @@ export function WebsiteVisual() {
 }
 
 export function DashboardVisual() {
-  const bars = [42, 68, 50, 88, 62, 76];
-
   return (
     <Stage>
       <div
-        className="absolute left-[12%] top-[18%] h-[64%] w-[76%] rounded-2xl border border-white/10 bg-ink p-5"
+        className="absolute left-[12%] top-[18%] h-[64%] w-[76%] overflow-hidden rounded-2xl border border-white/10 bg-ink"
         style={{
           transform:
             "rotateX(22deg) rotateY(-16deg) translateZ(20px)",
           transformStyle: "preserve-3d",
         }}
       >
-        <div className="mb-4 grid grid-cols-3 gap-2">
-          {["Live", "Ops", "Trend"].map((label, i) => (
-            <div
-              key={label}
-              className="rounded-lg border border-white/10 bg-white/[0.04] p-2"
-            >
-              <span className="text-[9px] uppercase tracking-wide text-white/35">
-                {label}
-              </span>
-
-              <div
-                className={`mt-1.5 h-1.5 w-10 rounded ${
-                  i === 1 ? "bg-red" : "bg-white/25"
-                }`}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div
-          className="flex h-[58%] items-end gap-2"
-          style={{ transformStyle: "preserve-3d" }}
-        >
-          {bars.map((h, i) => (
-            <div
-              key={i}
-              className={`flex-1 rounded-sm ${
-                i === 3 ? "bg-red" : "bg-white/20"
-              }`}
-              style={{
-                height: `${h}%`,
-                transform: `translateZ(${12 + (i % 3) * 10}px)`,
-              }}
-            />
-          ))}
-        </div>
+        <img
+          src="/previews/Dashboards.jpeg"
+          alt="Dashboard preview"
+          className="h-full w-full object-cover"
+        />
       </div>
     </Stage>
   );
@@ -458,29 +394,20 @@ export function BrandingVisual() {
   return (
     <Stage>
       <div
-        className="absolute left-[18%] top-[22%] h-[54%] w-[58%] rounded-3xl border border-ink/10 bg-paper p-6 shadow-[0_24px_50px_rgba(10,10,10,0.12)]"
+        className="absolute left-[18%] top-[22%] h-[54%] w-[58%] overflow-hidden rounded-3xl border border-ink/10 bg-paper shadow-[0_24px_50px_rgba(10,10,10,0.12)]"
         style={{
           transform:
             "rotateX(12deg) rotateY(-20deg) translateZ(30px)",
           transformStyle: "preserve-3d",
         }}
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink font-display text-lg font-bold text-white">
-          A
-        </div>
-
-        <div className="mt-8 flex gap-2.5">
-          <span className="h-9 w-9 rounded-full bg-ink" />
-          <span className="h-9 w-9 rounded-full bg-red" />
-          <span className="h-9 w-9 rounded-full bg-mist" />
-          <span className="h-9 w-9 rounded-full border border-ink/15 bg-paper" />
-        </div>
-
-        <p className="mt-6 font-display text-xl font-semibold tracking-tight text-ink">
-          Aa Bb
-        </p>
+        <img
+          src="/previews/Marketing.jpeg"
+          alt="Branding preview"
+          className="h-full w-full object-cover"
+        />
       </div>
-
+    
       <div
         className="absolute right-[10%] top-[16%] h-24 w-20 rounded-2xl bg-ink"
         style={{

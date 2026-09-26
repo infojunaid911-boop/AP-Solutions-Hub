@@ -22,13 +22,12 @@ export default function AboutHero() {
           </span>
           <h1 className="mt-5 font-display text-[12vw] font-semibold leading-[0.98] tracking-[-0.035em] text-ink sm:text-6xl lg:text-[4.4rem]">
             Design in one hand.
-            <span className="mt-1 block text-ink/35">Engineering in the other.</span>
+            <span className="mt-1 block text-red">Engineering in the other.</span>
           </h1>
           <p className="mt-7 max-w-xl font-body text-base leading-relaxed text-ink/60 sm:text-lg">
-            AP Solutions Hub brings websites, dashboards, marketing, branding
-            and 3D visualization together under one roof — so a business
-            doesn&apos;t have to piece its digital presence together from
-            five different vendors.
+            AP Solutions Hub is a digital solutions studio helping businesses turn ideas into modern digital
+            experiences. From websites and business dashboards to marketing, creative design and 3D
+            visualization, we bring strategy, design and technology together under one roof.
           </p>
         </motion.div>
 
@@ -47,7 +46,7 @@ export default function AboutHero() {
           animate={prefersReducedMotion ? undefined : { x: ["0%", "-50%"] }}
           transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
         >
-          {Array.from({ length: 2 }).map((_, loop) => (
+          {Array.from({ length: 3 }).map((_, loop) => (
             <span key={loop} className="flex gap-10 pr-10">
               {[
                 "Websites",
@@ -56,6 +55,19 @@ export default function AboutHero() {
                 "Graphic Design",
                 "3D Architecture",
                 "Social Media",
+                "Branding",
+                "Web Development",
+                "UI/UX Design",
+                "E-commerce",
+                "SEO",
+                "Content Creation",
+                "Digital Strategy",
+                "Animation",
+                "Product Photography",
+                "Video Production",
+                "Mobile App Design",
+                "Email Marketing",
+                "Data Visualization",
               ].map((item) => (
                 <span key={`${loop}-${item}`} className="flex items-center gap-10">
                   {item}
